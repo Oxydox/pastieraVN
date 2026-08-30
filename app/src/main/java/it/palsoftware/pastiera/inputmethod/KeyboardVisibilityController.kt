@@ -139,10 +139,16 @@ class KeyboardVisibilityController(
     }
 
     private fun ensureCandidatesSurfaceVisible() {
+        val candidatesSurfaceActuallyRendered =
+            renderedSurface() == RenderedSurface.CANDIDATES_VIEW
         setRequestedInputViewShown(false)
         setCandidatesSurfaceActive(true)
 
-        if (!candidatesSurfaceRequested) {
+        // Android can preserve its candidates-started/requested state while the device is locked,
+        // then resume the editor after unlock without attaching or drawing the candidates child
+        // again. Treat that requested-but-not-rendered state as drift and repeat the idempotent
+        // child request plus content refresh.
+        if (!candidatesSurfaceRequested || !candidatesSurfaceActuallyRendered) {
             candidatesSurfaceRequested = true
             if (!requestCandidatesView()) return
             refreshStatusBar()
@@ -236,7 +242,9 @@ class KeyboardVisibilityController(
         // enclosing IME window is still requested and visible. Preserve its delayed compatibility
         // request, but reserve an immediate whole-window show for a window that actually finished.
         val enclosingImeWindowNeedsShow =
-            candidatesSurfaceExplicitlyDismissed || !candidatesSurfaceRequested
+            candidatesSurfaceExplicitlyDismissed ||
+                !candidatesSurfaceRequested ||
+                renderedSurface() != RenderedSurface.CANDIDATES_VIEW
         ensureImeSurfaceVisible()
         if (
             enclosingImeWindowNeedsShow &&
@@ -420,7 +428,9 @@ class KeyboardVisibilityController(
         ) {
             isInputViewShown()
         } else {
-            candidatesSurfaceRequested && !requiresCandidatesSurfaceRecovery()
+            candidatesSurfaceRequested &&
+                renderedSurface() == RenderedSurface.CANDIDATES_VIEW &&
+                !requiresCandidatesSurfaceRecovery()
         }
 
     /**

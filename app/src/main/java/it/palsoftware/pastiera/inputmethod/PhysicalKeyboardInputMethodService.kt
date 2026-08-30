@@ -4732,12 +4732,6 @@ class PhysicalKeyboardInputMethodService : InputMethodService(), ClicksAccessibi
             origin = "ime_service",
             unicodeCharOverride = debugUnicodeOverride
         )
-        if (
-            isInputViewActive &&
-            keyboardVisibilityController.shouldRecoverSurfaceOnHardwareKey()
-        ) {
-            keyboardVisibilityController.onHardwareInputRequested()
-        }
         val ctrlActiveNow = event?.isCtrlPressed == true ||
             ctrlPressed ||
             ctrlPhysicallyPressed ||

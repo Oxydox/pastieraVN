@@ -193,6 +193,10 @@ class KeyboardVisibilityControllerTest {
         harness.runPostedActions()
 
         assertTrue(harness.inputViewShowRequests.isEmpty())
+        assertFalse(harness.controller.isExpectedSurfaceRequestedOrShown())
+
+        harness.renderSurface(KeyboardVisibilityController.RenderedSurface.CANDIDATES_VIEW)
+
         assertTrue(harness.controller.isExpectedSurfaceRequestedOrShown())
     }
 
@@ -514,7 +518,86 @@ class KeyboardVisibilityControllerTest {
 
         assertEquals(listOf(true), harness.candidatesSurfaceActiveChanges)
         assertEquals(0, harness.statusBarRefreshes)
+        assertFalse(harness.controller.isExpectedSurfaceRequestedOrShown())
+
+        harness.renderSurface(KeyboardVisibilityController.RenderedSurface.CANDIDATES_VIEW)
+
         assertTrue(harness.controller.isExpectedSurfaceRequestedOrShown())
+    }
+
+    @Test
+    fun firstHardwareKeyRepairsRequestedButNotRenderedCandidatesAfterUnlock() {
+        val context = RuntimeEnvironment.getApplication()
+        SettingsManager.setSoftwareKeyboardModeRuntimeOverride(
+            context,
+            SettingsManager.SoftwareKeyboardMode.FORCE_HARDWARE
+        )
+        val harness = createHarness(
+            currentInputConnection = mock(InputConnection::class.java),
+            inputViewActive = true,
+            initialRenderedSurface = KeyboardVisibilityController.RenderedSurface.HIDDEN
+        )
+
+        // The framework started candidates while locked, but after unlock the child is absent and
+        // no matching finish/start callback repairs it.
+        harness.controller.onCandidatesViewStarted()
+
+        assertTrue(harness.controller.shouldRecoverSurfaceOnHardwareKey())
+
+        harness.controller.onHardwareInputRequested()
+
+        assertTrue(harness.candidatesViewShown)
+        assertEquals(1, harness.candidatesVisibilityChanges)
+        assertEquals(1, harness.statusBarRefreshes)
+        assertEquals(listOf(false), harness.inputViewShowRequests)
+    }
+
+    @Test
+    fun editorRetapRepairsRequestedButNotRenderedCandidatesAfterUnlock() {
+        val context = RuntimeEnvironment.getApplication()
+        SettingsManager.setSoftwareKeyboardModeRuntimeOverride(
+            context,
+            SettingsManager.SoftwareKeyboardMode.FORCE_HARDWARE
+        )
+        val harness = createHarness(
+            currentInputConnection = mock(InputConnection::class.java),
+            inputViewActive = true,
+            initialRenderedSurface = KeyboardVisibilityController.RenderedSurface.HIDDEN
+        )
+
+        harness.controller.onCandidatesViewStarted()
+        harness.controller.onExplicitShowRequested()
+
+        assertTrue(harness.candidatesViewShown)
+        assertEquals(1, harness.candidatesVisibilityChanges)
+        assertEquals(1, harness.statusBarRefreshes)
+        // onShowInputRequested is already the enclosing framework show request; only the child
+        // needs to be reconciled here.
+        assertTrue(harness.inputViewShowRequests.isEmpty())
+    }
+
+    @Test
+    fun renderedCandidatesDoNotTriggerRedundantUnlockRecovery() {
+        val context = RuntimeEnvironment.getApplication()
+        SettingsManager.setSoftwareKeyboardModeRuntimeOverride(
+            context,
+            SettingsManager.SoftwareKeyboardMode.FORCE_HARDWARE
+        )
+        val harness = createHarness(
+            currentInputConnection = mock(InputConnection::class.java),
+            inputViewActive = true,
+            initialRenderedSurface = KeyboardVisibilityController.RenderedSurface.CANDIDATES_VIEW
+        )
+
+        harness.controller.onCandidatesViewStarted()
+
+        assertFalse(harness.controller.shouldRecoverSurfaceOnHardwareKey())
+
+        harness.controller.ensureImeSurfaceVisible()
+
+        assertEquals(0, harness.candidatesVisibilityChanges)
+        assertEquals(0, harness.statusBarRefreshes)
+        assertTrue(harness.inputViewShowRequests.isEmpty())
     }
 
     @Test
@@ -603,9 +686,13 @@ class KeyboardVisibilityControllerTest {
         harness.controller.onHardwareInputRequested()
 
         assertFalse(harness.controller.isCandidatesSurfaceExplicitlyDismissedForTests())
-        assertTrue(harness.controller.isExpectedSurfaceRequestedOrShown())
+        assertFalse(harness.controller.isExpectedSurfaceRequestedOrShown())
         assertTrue(harness.candidatesViewShown)
         assertEquals(listOf(false), harness.inputViewShowRequests)
+
+        harness.renderSurface(KeyboardVisibilityController.RenderedSurface.CANDIDATES_VIEW)
+
+        assertTrue(harness.controller.isExpectedSurfaceRequestedOrShown())
     }
 
     @Test
@@ -629,8 +716,12 @@ class KeyboardVisibilityControllerTest {
         harness.controller.onExplicitShowRequested()
 
         assertFalse(harness.controller.isCandidatesSurfaceExplicitlyDismissedForTests())
-        assertTrue(harness.controller.isExpectedSurfaceRequestedOrShown())
+        assertFalse(harness.controller.isExpectedSurfaceRequestedOrShown())
         assertTrue(harness.candidatesViewShown)
+
+        harness.renderSurface(KeyboardVisibilityController.RenderedSurface.CANDIDATES_VIEW)
+
+        assertTrue(harness.controller.isExpectedSurfaceRequestedOrShown())
     }
 
     @Test
