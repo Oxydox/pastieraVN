@@ -447,6 +447,7 @@
     <string name="clipboard_history_title">Історія буфера обміну</string>
     <string name="clipboard_clear_all">Очистити все</string>
     <string name="clipboard_empty_state">Немає історії буфера обміну</string>
+    <string name="clipboard_locked_state">Історія буфера обміну недоступна, поки пристрій заблоковано.</string>
     <string name="clipboard_pin">Закріпити</string>
     <string name="clipboard_unpin">Відкріпити</string>
     <string name="clipboard_delete">Видалити</string>

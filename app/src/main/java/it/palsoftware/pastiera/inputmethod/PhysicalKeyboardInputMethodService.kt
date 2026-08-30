@@ -1899,6 +1899,11 @@ class PhysicalKeyboardInputMethodService : InputMethodService(), ClicksAccessibi
                 postClipboardBadgeUpdate()
             }
         })
+        clipboardHistoryManager.addAccessStateListener {
+            uiHandler.post {
+                candidatesBarController.updateClipboardCount(clipboardHistoryManager.getHistorySize())
+            }
+        }
         alternateCharacterManager = AlternateCharacterManager(
             assets = assets,
             prefs = prefs,

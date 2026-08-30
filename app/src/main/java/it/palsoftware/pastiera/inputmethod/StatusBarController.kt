@@ -209,7 +209,7 @@ class StatusBarController(
     fun invalidateStaticVariations() {
         variationBarView?.invalidateStaticVariations()
     }
-    
+
     /**
      * Sets the microphone button active state.
      */
@@ -314,6 +314,7 @@ class StatusBarController(
     private var emojiKeyboardBottomPaddingPx: Int = 0
     private var clipboardHistoryView: ClipboardHistoryView? = null
     private var lastClipboardCountRendered: Int = -1
+    private var lastClipboardAccessibleRendered: Boolean? = null
     private var emojiPickerView: EmojiPickerView? = null
     private var emojiPickerSearchPopup: PopupWindow? = null
     private var emojiPickerSearchPopupShowPending: Boolean = false
@@ -1152,10 +1153,12 @@ class StatusBarController(
 
         // Refresh only when needed (data changed), otherwise keep the list stable.
         val count = manager.getHistorySize()
-        if (count != lastClipboardCountRendered) {
+        val accessible = manager.isHistoryAccessible()
+        if (count != lastClipboardCountRendered || accessible != lastClipboardAccessibleRendered) {
             manager.prepareClipboardHistory()
             view.refresh()
             lastClipboardCountRendered = count
+            lastClipboardAccessibleRendered = accessible
         }
         lastSymPageRendered = 3
     }

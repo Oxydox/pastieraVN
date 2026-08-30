@@ -1480,6 +1480,7 @@ Each key can be configured as Keycode, Action, Native Ctrl, or None. Use overrid
     <string name="clipboard_history_title">Clipboard History</string>
     <string name="clipboard_clear_all">Clear All</string>
     <string name="clipboard_empty_state">No clipboard history</string>
+    <string name="clipboard_locked_state">Clipboard history is unavailable while the device is locked.</string>
     <string name="clipboard_pin">Pin</string>
     <string name="clipboard_unpin">Unpin</string>
     <string name="clipboard_delete">Delete</string>

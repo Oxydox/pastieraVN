@@ -361,6 +361,7 @@
     <string name="clipboard_history_title">Historial del portapapeles</string>
     <string name="clipboard_clear_all">Borrar todo</string>
     <string name="clipboard_empty_state">No hay historial del portapapeles</string>
+    <string name="clipboard_locked_state">El historial del portapapeles no está disponible mientras el dispositivo está bloqueado.</string>
     <string name="clipboard_pin">Fijar</string>
     <string name="clipboard_unpin">Desfijar</string>
     <string name="clipboard_delete">Eliminar</string>

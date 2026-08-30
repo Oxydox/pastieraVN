@@ -39,9 +39,13 @@ class ClipboardHistoryView(
     private val clearButton: TextView
     private val titleText: TextView
     private var closeButton: ImageView? = null
+    private var activeContextMenu: PopupMenu? = null
     private var currentInputConnection: InputConnection? = null
     private val entryHeightPx: Int
     private var scrollToTopPending: Boolean = false
+    private val accessStateListener: (Boolean) -> Unit = {
+        post { refresh() }
+    }
     var themeOverride: KeyboardThemeColors? = null
         set(value) {
             if (field == value) {
@@ -187,6 +191,19 @@ class ClipboardHistoryView(
         currentInputConnection = connection
     }
 
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        clipboardHistoryManager.addAccessStateListener(accessStateListener)
+        refresh()
+    }
+
+    override fun onDetachedFromWindow() {
+        clipboardHistoryManager.removeAccessStateListener(accessStateListener)
+        activeContextMenu?.dismiss()
+        activeContextMenu = null
+        super.onDetachedFromWindow()
+    }
+
     fun configureSoftwareKeyboardMode(heightPx: Int?) {
         val targetHeight = heightPx?.takeIf { it > 0 } ?: dpToPx(177f)
         updateHeight(targetHeight)
@@ -200,8 +217,25 @@ class ClipboardHistoryView(
     }
 
     fun refresh() {
+        val historyAccessible = clipboardHistoryManager.isHistoryAccessible()
+        if (!historyAccessible) {
+            activeContextMenu?.dismiss()
+            activeContextMenu = null
+            adapter.submitList(emptyList())
+            recyclerView.visibility = View.GONE
+            recyclerView.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+            clearButton.visibility = View.GONE
+            clearButton.isEnabled = false
+            emptyStateView.text = context.getString(R.string.clipboard_locked_state)
+            emptyStateView.visibility = View.VISIBLE
+            return
+        }
+
         clipboardHistoryManager.prepareClipboardHistory()
         val entries = loadEntries()
+        recyclerView.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_AUTO
+        clearButton.visibility = View.VISIBLE
+        emptyStateView.text = context.getString(R.string.clipboard_empty_state)
         
         // Save current scroll position before updating the list
         val layoutManager = recyclerView.layoutManager as? GridLayoutManager
@@ -277,7 +311,10 @@ class ClipboardHistoryView(
     }
 
     private fun showClipboardContextMenu(view: View, entry: ClipboardHistoryEntry) {
+        if (!clipboardHistoryManager.isHistoryAccessible()) return
+        activeContextMenu?.dismiss()
         val menu = PopupMenu(context, view)
+        activeContextMenu = menu
         val pinText = context.getString(R.string.clipboard_pin)
         val unpinText = context.getString(R.string.clipboard_unpin)
         val deleteText = context.getString(R.string.clipboard_delete)
@@ -290,6 +327,10 @@ class ClipboardHistoryView(
         menu.menu.add(deleteText)
 
         menu.setOnMenuItemClickListener { item ->
+            if (!clipboardHistoryManager.isHistoryAccessible()) {
+                activeContextMenu = null
+                return@setOnMenuItemClickListener true
+            }
             when (item.title.toString()) {
                 pinText, unpinText -> {
                     clipboardHistoryManager.toggleClipPinned(entry.id)
@@ -313,11 +354,12 @@ class ClipboardHistoryView(
                 else -> false
             }
         }
+        menu.setOnDismissListener { activeContextMenu = null }
         menu.show()
     }
 
     private fun onEntryClicked(entry: ClipboardHistoryEntry) {
-        currentInputConnection?.commitText(entry.text, 1)
+        clipboardHistoryManager.pasteText(entry.text, currentInputConnection)
     }
 
     private fun createRoundedBackground(isPinned: Boolean = false): GradientDrawable {
@@ -409,7 +451,21 @@ class ClipboardHistoryView(
 
         override fun onBindViewHolder(holder: ClipboardHistoryViewHolder, position: Int) {
             val entry = getItem(position)
+            if (!clipboardHistoryManager.isHistoryAccessible()) {
+                holder.textView.text = ""
+                holder.itemView.contentDescription = null
+                holder.itemView.isClickable = false
+                holder.itemView.isLongClickable = false
+                holder.itemView.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+                holder.itemView.setOnClickListener(null)
+                holder.itemView.setOnLongClickListener(null)
+                return
+            }
             holder.textView.text = entry.text
+            holder.itemView.contentDescription = entry.text
+            holder.itemView.isClickable = true
+            holder.itemView.isLongClickable = true
+            holder.itemView.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_AUTO
             
             // Update background color based on pinned status
             holder.itemView.background = createRoundedBackground(entry.isPinned)

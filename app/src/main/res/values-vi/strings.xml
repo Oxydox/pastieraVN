@@ -510,6 +510,7 @@
     <string name="clipboard_history_title">Lịch sử bộ nhớ tạm</string>
     <string name="clipboard_clear_all">Xóa tất cả</string>
     <string name="clipboard_empty_state">Không có lịch sử bộ nhớ tạm</string>
+    <string name="clipboard_locked_state">Lịch sử bộ nhớ tạm không khả dụng khi thiết bị bị khóa.</string>
     <string name="clipboard_pin">Ghim</string>
     <string name="clipboard_unpin">Bỏ ghim</string>
     <string name="clipboard_delete">Xóa</string>
