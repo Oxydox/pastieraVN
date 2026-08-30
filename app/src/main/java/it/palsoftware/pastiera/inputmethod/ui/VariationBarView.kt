@@ -434,10 +434,7 @@ class VariationBarView(
                     }
                     staticVariationsAlt
                 } else {
-                    val staticPreset = SettingsManager.getStaticVariationBarPreset(context)
-                    if (staticPreset != SettingsManager.STATIC_VARIATION_PRESET_SYMBOLS) {
-                        staticVariations = SettingsManager.getStaticVariationBasePreset(context)
-                    } else if (staticVariations.isEmpty()) {
+                    if (staticVariations.isEmpty()) {
                         val loaded = VariationRepository.loadStaticVariations(context.assets, context)
                         staticVariations = loaded.ifEmpty {
                             SettingsManager.getStaticVariationBasePreset(context)
