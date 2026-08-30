@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.graphics.Rect
+import android.os.Looper
 import android.text.TextUtils
 import android.util.TypedValue
 import android.view.Gravity
@@ -44,7 +45,11 @@ class ClipboardHistoryView(
     private val entryHeightPx: Int
     private var scrollToTopPending: Boolean = false
     private val accessStateListener: (Boolean) -> Unit = {
-        post { refresh() }
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            refresh()
+        } else {
+            post { refresh() }
+        }
     }
     var themeOverride: KeyboardThemeColors? = null
         set(value) {

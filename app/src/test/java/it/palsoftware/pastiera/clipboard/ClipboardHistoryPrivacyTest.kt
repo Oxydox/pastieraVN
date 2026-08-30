@@ -11,6 +11,7 @@ import android.os.Looper
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.BaseInputConnection
+import android.widget.FrameLayout
 import android.widget.TextView
 import it.palsoftware.pastiera.R
 import it.palsoftware.pastiera.SettingsManager
@@ -165,12 +166,40 @@ class ClipboardHistoryPrivacyTest {
         assertTrue(visibleTexts(view).contains("view-secret"))
 
         setAccessible(false)
-        shadowOf(Looper.getMainLooper()).idle()
 
         val lockedTexts = visibleTexts(view)
         assertFalse(lockedTexts.contains("view-secret"))
         assertTrue(lockedTexts.contains(context.getString(R.string.clipboard_locked_state)))
         assertFalse(visibleContentDescriptions(view).contains("view-secret"))
+    }
+
+    @Test
+    fun popupHistoryReplacesSensitiveRowsImmediatelyWhenLocked() {
+        copyToSystemClipboard("popup-secret")
+        historyManager.onPrimaryClipChanged()
+        val activity = Robolectric.buildActivity(Activity::class.java).setup().visible().get()
+        activity.setContentView(FrameLayout(activity))
+        val popup = ClipboardHistoryPopupView(activity, historyManager)
+
+        try {
+            popup.show()
+            shadowOf(Looper.getMainLooper()).idle()
+            val contentView = popup.javaClass.getDeclaredField("contentView").run {
+                isAccessible = true
+                get(popup) as View
+            }
+            assertTrue(visibleTexts(contentView).contains("popup-secret"))
+
+            setAccessible(false)
+
+            val lockedTexts = visibleTexts(contentView)
+            assertFalse(lockedTexts.contains("popup-secret"))
+            assertFalse(lockedTexts.contains(context.getString(R.string.clipboard_clear_all)))
+            assertTrue(lockedTexts.contains(context.getString(R.string.clipboard_locked_state)))
+            assertFalse(visibleContentDescriptions(contentView).contains("popup-secret"))
+        } finally {
+            popup.dismiss()
+        }
     }
 
     private fun copyToSystemClipboard(text: String) {

@@ -3,6 +3,7 @@ package it.palsoftware.pastiera.clipboard
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.os.Looper
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
@@ -30,7 +31,11 @@ class ClipboardHistoryPopupView(
     private val entriesContainer: LinearLayout
     private val clearButton: Button
     private val accessStateListener: (Boolean) -> Unit = {
-        contentView.post { refreshEntries() }
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            refreshEntries()
+        } else {
+            contentView.post { refreshEntries() }
+        }
     }
 
     private var onItemClickListener: ((ClipboardHistoryEntry) -> Unit)? = null
