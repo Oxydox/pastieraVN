@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -329,6 +330,8 @@ fun SettingsScreen(
     
     // Handle system back button
     BackHandler { navigateBack() }
+    // AnimatedContent removes inactive pages; retain their scroll state for Back.
+    val pageStates = rememberSaveableStateHolder()
 
     CompositionLocalProvider(
         LocalSettingHighlightId provides highlightSettingId,
@@ -360,6 +363,7 @@ fun SettingsScreen(
         label = "settings_navigation",
         contentKey = { it }
     ) { entry ->
+        pageStates.SaveableStateProvider(entry.toString()) {
         when (entry.destination) {
             SettingsDestination.Main -> {
                 SettingsMainScreen(
@@ -510,6 +514,8 @@ fun SettingsScreen(
             }
         }
     }
+    }
+
     }
 
     // Share/copy sheet for the settings entry currently being long-pressed

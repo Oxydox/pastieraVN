@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -277,6 +278,8 @@ fun CustomizationSettingsScreen(
     }
     
     BackHandler { navigateBack() }
+    // AnimatedContent removes inactive pages; retain their scroll state for Back.
+    val pageStates = rememberSaveableStateHolder()
     
     AnimatedContent(
         targetState = currentDestination,
@@ -304,6 +307,7 @@ fun CustomizationSettingsScreen(
         label = "customization_navigation",
         contentKey = { it }
     ) { destination ->
+        pageStates.SaveableStateProvider(destination.name) {
         when (destination) {
             CustomizationDestination.Main -> {
                 Scaffold(
@@ -613,6 +617,7 @@ fun CustomizationSettingsScreen(
                 )
             }
         }
+    }
     }
 }
 
