@@ -95,6 +95,9 @@
             android:label="@string/sym_customize_title"
             android:theme="@style/Theme.Pastiera" />
         
+        <activity android:name=".CornerCalibrationActivity" android:exported="false"
+            android:label="Displaykurve kalibrieren" android:theme="@style/Theme.Pastiera" />
+
         <!-- Activity per le impostazioni -->
         <activity
             android:name=".SettingsActivity"

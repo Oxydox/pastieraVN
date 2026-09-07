@@ -2944,12 +2944,12 @@ class StatusBarController(
         view.translationY = measuredHeight.toFloat()
         view.visibility = View.VISIBLE
 
-        // Set background to opaque immediately without animation
+        // Restore the theme background, including its transparency, without animation.
         backgroundView?.let { bgView ->
             if (bgView.background !is ColorDrawable) {
                 bgView.background = ColorDrawable(activeThemeColors().background)
             }
-            (bgView.background as? ColorDrawable)?.alpha = 255
+            (bgView.background as? ColorDrawable)?.color = activeThemeColors().background
         }
 
         val animator = ValueAnimator.ofFloat(measuredHeight.toFloat(), 0f).apply {
@@ -3071,7 +3071,7 @@ class StatusBarController(
         if (layout.background !is ColorDrawable) {
             layout.background = ColorDrawable(activeTheme.background)
         } else if (snapshot.symPage == 0) {
-            (layout.background as ColorDrawable).alpha = 255
+            (layout.background as ColorDrawable).color = activeThemeColors().background
         }
         
         modifiersContainerView.visibility = View.GONE
@@ -3153,7 +3153,7 @@ class StatusBarController(
             if (layout.background !is ColorDrawable) {
                 layout.background = ColorDrawable(activeColors.background)
             }
-            (layout.background as? ColorDrawable)?.alpha = 255
+            (layout.background as? ColorDrawable)?.color = activeThemeColors().background
             variationsWrapperView?.apply {
                 visibility = View.INVISIBLE
                 isEnabled = false
@@ -3244,11 +3244,11 @@ class StatusBarController(
             }
             variationsBar?.resetVariationsState()
 
-            // Pin background to opaque IME color and hide variations so SYM animates on a solid canvas.
+            // Restore the theme background and hide variations while SYM animates.
             if (layout.background !is ColorDrawable) {
                 layout.background = ColorDrawable(activeColors.background)
             }
-            (layout.background as? ColorDrawable)?.alpha = 255
+            (layout.background as? ColorDrawable)?.color = activeThemeColors().background
             if (isSoftwareKeyboardOverlayPage) {
                 variationsWrapperView?.apply {
                     visibility = View.VISIBLE
@@ -3586,6 +3586,16 @@ class StatusBarController(
         var expandedPickerButtons: Pair<View, View>? = null
         var expandedKeyHeightPx: Int = (HARDWARE_SYM_KEY_HEIGHT_DP * resources.displayMetrics.density).toInt()
         private val cornerFillPaint = Paint()
+        private val calibrationPreviewListener: () -> Unit = {
+            applyBottomCornerClip()
+            requestLayout()
+            invalidate()
+        }
+
+        override fun onAttachedToWindow() {
+            super.onAttachedToWindow()
+            it.palsoftware.pastiera.T2eCornerCalibration.addPreviewListener(calibrationPreviewListener)
+        }
 
         override fun onDraw(canvas: Canvas) {
             super.onDraw(canvas)
@@ -3839,7 +3849,12 @@ class StatusBarController(
         // (left, right) display corner radii in px; null disables the outline clip.
         var bottomCornerRadiiPx: Pair<Int, Int>? = null
             set(value) {
-                if (field == value) return
+                if (field == value) {
+                    applyBottomCornerClip()
+                    invalidate()
+                    requestLayout()
+                    return
+                }
                 field = value
                 applyBottomCornerClip()
                 requestLayout()
@@ -3880,13 +3895,10 @@ class StatusBarController(
                 override fun getOutline(view: View, outline: Outline) {
                     val left = radii!!.first.coerceIn(0, view.width / 2).toFloat()
                     val right = radii.second.coerceIn(0, view.width / 2).toFloat()
-                    val path = Path().apply {
-                        addRoundRect(
-                            RectF(0f, -2f * radius, view.width.toFloat(), view.height.toFloat()),
-                            floatArrayOf(0f, 0f, 0f, 0f, right, right, left, left),
-                            Path.Direction.CW
-                        )
-                    }
+                    val path = it.palsoftware.pastiera.T2eCornerGeometry.path(
+                        view.width.toFloat(), view.height.toFloat(), left, right,
+                        it.palsoftware.pastiera.T2eCornerCalibration.read(context)
+                    )
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                         outline.setPath(path)
                     } else {
@@ -3900,6 +3912,7 @@ class StatusBarController(
         }
 
         override fun onDetachedFromWindow() {
+            it.palsoftware.pastiera.T2eCornerCalibration.removePreviewListener(calibrationPreviewListener)
             screenAwakeController.release()
             super.onDetachedFromWindow()
         }

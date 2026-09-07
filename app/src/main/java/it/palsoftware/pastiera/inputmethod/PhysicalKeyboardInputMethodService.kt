@@ -2279,6 +2279,7 @@ class PhysicalKeyboardInputMethodService : InputMethodService(), ClicksAccessibi
             } else if (key == "pastierina_mode_override") {
                 keyboardVisibilityController.syncStatusBarPresentationModeFromSettings()
             } else if (key == SettingsManager.KEY_TITAN2_ELITE_ROUNDED_CORNER_INSETS ||
+                key == it.palsoftware.pastiera.T2eCornerCalibration.KEY ||
                 key == SettingsManager.KEY_TITAN2_ELITE_TOP_CORNER_MULTIPLIER ||
                 key == SettingsManager.KEY_TITAN2_ELITE_MAX_ICON_SHRINK) {
                 if (::candidatesBarController.isInitialized) {

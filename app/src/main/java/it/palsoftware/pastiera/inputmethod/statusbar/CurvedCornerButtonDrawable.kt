@@ -64,36 +64,29 @@ internal class CurvedCornerButtonDrawable(
             chrome.getLocationInWindow(chromeLocation)
             val x = (location[0] - chromeLocation[0]).toFloat()
             val y = (location[1] - chromeLocation[1]).toFloat()
-            val density = view.resources.displayMetrics.density
-            // A uniform inset preserves circular, concentric display corners.
-            val sideInset = 0.5f * density + halfStroke
-            val bottomInset = sideInset
-            val leftX = (radii.first - sideInset).coerceAtLeast(0f)
-            val rightX = (radii.second - sideInset).coerceAtLeast(0f)
-            val leftY = (radii.first - bottomInset).coerceAtLeast(0f)
-            val rightY = (radii.second - bottomInset).coerceAtLeast(0f)
-            displayPath.reset()
-            displayPath.addRoundRect(
-                RectF(sideInset - x, -2f * maxOf(radii.first, radii.second) - y,
-                    chrome.width - sideInset - x, chrome.height - bottomInset - y),
-                floatArrayOf(0f, 0f, 0f, 0f, rightX, rightY, leftX, leftY), Path.Direction.CW
-            )
+            val calibration = it.palsoftware.pastiera.T2eCornerCalibration.read(view.context)
+            // Calibration already includes the intended visible gap. Offset only the
+            // stroke centerline so its outside edge follows that exact contour.
+            val contourInset = halfStroke
+            displayPath.set(it.palsoftware.pastiera.T2eCornerGeometry.path(
+                chrome.width.toFloat(), chrome.height.toFloat(),
+                radii.first.toFloat(), radii.second.toFloat(), calibration, contourInset
+            ))
+            displayPath.offset(-x, -y)
             buttonPath.op(displayPath, Path.Op.INTERSECT)
-            // Blend the upper edge into the display circle with matching tangents.
-            // Work in mirrored coordinates so both sides have identical geometry.
-            val radius = if (leftEdge) leftX else rightX
-            val circleBottom = chrome.height - bottomInset - y
-            val circleTop = circleBottom - radius
-            val outerX = if (leftEdge) sideInset - x else chrome.width - sideInset - x
-            fun boundary(atY: Float): Float {
-                val dy = (atY - circleTop).coerceIn(0f, radius)
-                return if (radius > 0f) radius - kotlin.math.sqrt((radius * radius - dy * dy).coerceAtLeast(0f)) else 0f
-            }
+            // The upper button rounding joins the same calibrated contour used by the preview.
+            val radius = (if (leftEdge) radii.first else radii.second).toFloat()
+            val outerX = (if (leftEdge) -x else chrome.width - x) + calibration.shiftXPx
+            fun boundary(atY: Float): Float =
+                it.palsoftware.pastiera.T2eCornerGeometry.atY(
+                    radius, chrome.height.toFloat(), atY + y - calibration.shiftYPx, calibration, contourInset
+                ).x
             val joinY = (rect.top + topRadius).coerceAtMost(rect.bottom - bottomRadius)
             val joinX = boundary(joinY)
-            val dy = (joinY - circleTop).coerceIn(0f, radius)
-            val tangentX = if (radius > 0f) dy / radius else 0f
-            val tangentY = if (radius > 0f) kotlin.math.sqrt((1f - tangentX * tangentX).coerceAtLeast(0f)) else 1f
+            val dx = (boundary(joinY + 0.05f) - boundary(joinY - 0.05f)).coerceAtLeast(0f)
+            val tangentLength = kotlin.math.sqrt(dx * dx + 0.1f * 0.1f)
+            val tangentX = dx / tangentLength
+            val tangentY = 0.1f / tangentLength
             val available = if (leftEdge) rect.right - outerX else outerX - rect.left
             val startX = (boundary(rect.top) + topRadius).coerceAtMost(available - bottomRadius)
             val handle = (joinY - rect.top) * 0.55f

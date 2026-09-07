@@ -684,6 +684,21 @@ fun AdvancedSettingsScreen(
                             }
                         }
 
+                        if (it.palsoftware.pastiera.inputmethod.DeviceSpecific.isTitan2EliteDevice() ||
+                            SettingsManager.getTitan2EliteRoundedCornerInsetsEnabled(context)) {
+                            Surface(modifier = Modifier.fillMaxWidth()
+                                .settingRow("advanced.corner_calibration") {
+                                    context.startActivity(Intent(context, CornerCalibrationActivity::class.java))
+                                }) {
+                                Column(Modifier.padding(16.dp)) {
+                                    Text(stringResource(R.string.corner_calibration_title),
+                                        style = MaterialTheme.typography.titleMedium)
+                                    Text(stringResource(R.string.corner_calibration_description),
+                                        style = MaterialTheme.typography.bodySmall)
+                                }
+                            }
+                        }
+
                         // IME Test Screen (only in debug builds)
                         if (BuildConfig.DEBUG) {
                             Surface(

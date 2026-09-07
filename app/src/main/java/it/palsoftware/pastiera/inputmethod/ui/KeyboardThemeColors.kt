@@ -24,7 +24,7 @@ data class KeyboardThemeColors(
     // Pastiera Dark surfaces so custom palettes keep their configured divider.
     val statusButtonBorder: Int
         get() = if (
-            background == 0xFF000000.toInt() &&
+            (background == 0xFF000000.toInt() || background == 0x00000000) &&
             normalKey == 0xFF15191D.toInt() &&
             statusBarButton == 0xFF2B3138.toInt() &&
             divider == 0xFF2C3136.toInt()
