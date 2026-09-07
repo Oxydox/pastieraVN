@@ -977,10 +977,16 @@ Each key can be configured as Keycode, Action, Native Ctrl, or None. Use overrid
     <string name="app_enter_behaviour_add_app">Add app</string>
     <string name="app_enter_behaviour_add_app_description">For additional apps this is a target configuration first. The curated messaging list uses tested strategies.</string>
     <string name="app_enter_behaviour_add_app_list_title">Choose app</string>
+    <string name="app_enter_behaviour_app_picker_title">Add apps</string>
+    <string name="app_enter_behaviour_app_picker_search">Search apps</string>
+    <string name="app_enter_behaviour_app_picker_empty">No matching apps</string>
+    <string name="app_enter_behaviour_app_picker_add_selected">Add (%1$d)</string>
     <string name="app_enter_behaviour_remove_app">Remove app</string>
     <string name="app_enter_behaviour_show_manual_override">Manual override</string>
     <string name="app_enter_behaviour_hide_manual_override">Hide manual fields</string>
     <string name="app_enter_behaviour_manual_override_note">The curated strategy is usually the better default. Override only for app updates or special cases.</string>
+    <string name="app_enter_behaviour_manual_summary">%1$s · %2$s</string>
+    <string name="app_enter_behaviour_manual_additional_shortcut_summary">Additional shortcut: %1$s</string>
     <string name="app_enter_behaviour_option_app_default">App default</string>
     <string name="app_enter_behaviour_option_send_shift_newline">Enter sends, Shift+Enter newline</string>
     <string name="app_enter_behaviour_option_newline_ctrl_send">Enter newline, Ctrl+Enter sends</string>

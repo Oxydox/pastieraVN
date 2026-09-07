@@ -384,10 +384,16 @@ Jede Taste kann als Keycode, Aktion, Native Ctrl oder Keine konfiguriert werden.
     <string name="app_enter_behaviour_add_app">App hinzufügen</string>
     <string name="app_enter_behaviour_add_app_description">Für zusätzliche Apps ist dies zunächst eine Ziel-Konfiguration. Die kuratierte Messenger-Liste nutzt getestete Strategien.</string>
     <string name="app_enter_behaviour_add_app_list_title">App auswählen</string>
+    <string name="app_enter_behaviour_app_picker_title">Apps hinzufügen</string>
+    <string name="app_enter_behaviour_app_picker_search">Apps suchen</string>
+    <string name="app_enter_behaviour_app_picker_empty">Keine passenden Apps</string>
+    <string name="app_enter_behaviour_app_picker_add_selected">Hinzufügen (%1$d)</string>
     <string name="app_enter_behaviour_remove_app">App entfernen</string>
     <string name="app_enter_behaviour_show_manual_override">Manuell überschreiben</string>
     <string name="app_enter_behaviour_hide_manual_override">Manuelle Felder ausblenden</string>
     <string name="app_enter_behaviour_manual_override_note">Normalerweise ist die kuratierte Strategie sinnvoller. Überschreiben ist nur für App-Updates oder Sonderfälle gedacht.</string>
+    <string name="app_enter_behaviour_manual_summary">%1$s · %2$s</string>
+    <string name="app_enter_behaviour_manual_additional_shortcut_summary">Zusätzlicher Kurzbefehl: %1$s</string>
     <string name="app_enter_behaviour_option_app_default">App-Standard</string>
     <string name="app_enter_behaviour_option_send_shift_newline">Enter sendet, Shift+Enter neue Zeile</string>
     <string name="app_enter_behaviour_option_newline_ctrl_send">Enter neue Zeile, Ctrl+Enter sendet</string>
