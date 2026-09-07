@@ -51,6 +51,7 @@ fun CustomTopBar(
     onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val statusBarInset = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     Surface(
         modifier = modifier
             .fillMaxWidth()
@@ -79,7 +80,9 @@ fun CustomTopBar(
             ) {
                 // Centered title and subtitle
                 Column(
-                    modifier = Modifier.align(Alignment.Center),
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .offset(y = statusBarInset / 2),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
@@ -101,6 +104,7 @@ fun CustomTopBar(
                     onClick = onSettingsClick,
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
+                        .offset(y = statusBarInset / 2)
                         .size(64.dp)
                         .clip(RoundedCornerShape(16.dp))
                         .background(

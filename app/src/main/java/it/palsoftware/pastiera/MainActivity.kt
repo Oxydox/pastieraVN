@@ -218,7 +218,10 @@ class MainActivity : LocalizedComponentActivity() {
         setContent {
             PastieraTheme {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                    Scaffold(
+                        modifier = Modifier.fillMaxSize(),
+                        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
+                    ) { innerPadding ->
                         KeyboardSetupScreen(
                             modifier = Modifier
                                 .padding(innerPadding)

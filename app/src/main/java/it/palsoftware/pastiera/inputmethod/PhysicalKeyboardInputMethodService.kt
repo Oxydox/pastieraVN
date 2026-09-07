@@ -2175,7 +2175,9 @@ class PhysicalKeyboardInputMethodService : InputMethodService(), ClicksAccessibi
                 attachTrackpadDecorViewMotionHook("provider_changed")
             } else if (key == "pastierina_mode_override") {
                 keyboardVisibilityController.syncStatusBarPresentationModeFromSettings()
-            } else if (key == SettingsManager.KEY_TITAN2_ELITE_ROUNDED_CORNER_INSETS) {
+            } else if (key == SettingsManager.KEY_TITAN2_ELITE_ROUNDED_CORNER_INSETS ||
+                key == SettingsManager.KEY_TITAN2_ELITE_TOP_CORNER_MULTIPLIER ||
+                key == SettingsManager.KEY_TITAN2_ELITE_MAX_ICON_SHRINK) {
                 if (::candidatesBarController.isInitialized) {
                     candidatesBarController.refreshWindowInsets()
                 }

@@ -175,6 +175,8 @@ object SettingsManager {
     private const val KEY_SOFTWARE_KEYBOARD_LONG_PRESS_LAYER_POPUP_ENABLED = "software_keyboard_long_press_layer_popup_enabled"
     private const val KEY_SOFTWARE_KEYBOARD_LONG_PRESS_LAYER_POPUP_BELOW_KEY = "software_keyboard_long_press_layer_popup_below_key"
     private const val KEY_TITAN2_LAYOUT_ENABLED = "titan2_layout_enabled" // Align OSK with Titan 2 physical layout
+    const val KEY_TITAN2_ELITE_MAX_ICON_SHRINK = "titan2_elite_max_icon_shrink"
+    const val KEY_TITAN2_ELITE_TOP_CORNER_MULTIPLIER = "titan2_elite_top_corner_multiplier"
     const val KEY_TITAN2_ELITE_ROUNDED_CORNER_INSETS = "titan2_elite_rounded_corner_insets"
     private const val KEY_ACCESSIBILITY_LIVE_ANNOUNCEMENTS_ENABLED = "accessibility_live_announcements_enabled" // Whether status bar accessibility live announcements are enabled
     private const val KEY_ACCESSIBILITY_READ_SECOND_ROW_ENABLED = "accessibility_read_second_row_enabled" // Whether TalkBack should read quick settings/variations row
@@ -1439,6 +1441,24 @@ object SettingsManager {
             KEY_TITAN2_ELITE_ROUNDED_CORNER_INSETS,
             DeviceSpecific.isTitan2EliteDevice()
         )
+
+    fun getTitan2EliteTopCornerMultiplier(context: Context): Int =
+        getPreferences(context).getInt(KEY_TITAN2_ELITE_TOP_CORNER_MULTIPLIER, 2).let {
+            when (it) { 1, 4, 6 -> it; else -> 2 }
+        }
+
+    fun setTitan2EliteTopCornerMultiplier(context: Context, multiplier: Int) {
+        getPreferences(context).edit()
+            .putInt(KEY_TITAN2_ELITE_TOP_CORNER_MULTIPLIER, when (multiplier) { 1, 4, 6 -> multiplier; else -> 2 })
+            .apply()
+    }
+
+    fun getTitan2EliteMaxIconShrink(context: Context): Int =
+        getPreferences(context).getInt(KEY_TITAN2_ELITE_MAX_ICON_SHRINK, 90).coerceIn(0, 90)
+
+    fun setTitan2EliteMaxIconShrink(context: Context, percent: Int) {
+        getPreferences(context).edit().putInt(KEY_TITAN2_ELITE_MAX_ICON_SHRINK, percent.coerceIn(0, 90)).apply()
+    }
 
     fun setTitan2EliteRoundedCornerInsetsEnabled(context: Context, enabled: Boolean) {
         getPreferences(context).edit()
