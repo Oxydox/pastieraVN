@@ -7,13 +7,15 @@ internal data class GitHubRelease(
     val name: String?,
     val prerelease: Boolean,
     val draft: Boolean,
-    val htmlUrl: String?
+    val htmlUrl: String?,
+    val downloadUrl: String? = null
 )
 
 internal data class ReleaseInfo(
     val tagName: String,
     val displayName: String,
-    val releasePageUrl: String?
+    val releasePageUrl: String?,
+    val downloadUrl: String? = null
 )
 
 internal fun parseGitHubReleases(releases: JSONArray): List<GitHubRelease> =
@@ -28,7 +30,12 @@ internal fun parseGitHubReleases(releases: JSONArray): List<GitHubRelease> =
                     name = release.optString("name").takeIf(String::isNotBlank),
                     prerelease = release.optBoolean("prerelease"),
                     draft = release.optBoolean("draft"),
-                    htmlUrl = release.optString("html_url").takeIf(String::isNotBlank)
+                    htmlUrl = release.optString("html_url").takeIf(String::isNotBlank),
+                    downloadUrl = release.optJSONArray("assets")?.let { assets ->
+                        (0 until assets.length()).mapNotNull { assets.optJSONObject(it) }
+                            .firstOrNull { it.optString("name").endsWith(".apk", ignoreCase = true) }
+                            ?.optString("browser_download_url")?.takeIf { it.startsWith("https://") }
+                    }
                 )
             )
         }

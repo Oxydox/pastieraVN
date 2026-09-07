@@ -31,13 +31,50 @@ internal data class UpdateCheckResult(
     val hasAnnouncement: Boolean = false,
     val releaseTag: String? = null,
     val displayName: String? = null,
-    val releasePageUrl: String? = null
+    val releasePageUrl: String? = null,
+    val downloadUrl: String? = null,
+    val isNightlyUpdate: Boolean = false
 )
 
 internal fun checkForUpdate(
     context: Context,
     releaseChannel: String,
     ignoreDismissedReleases: Boolean = true,
+    callback: (UpdateCheckResult) -> Unit
+) = checkRelease(context, releaseChannel, ignoreDismissedReleases, false, callback)
+
+
+internal fun checkForNightlyUpdate(
+    context: Context,
+    ignoreDismissedReleases: Boolean = true,
+    callback: (UpdateCheckResult) -> Unit
+) {
+    if (BuildConfig.RELEASE_CHANNEL != "nightly") {
+        postResult(callback, UpdateCheckResult(successful = true))
+        return
+    }
+    checkRelease(context, "nightly", ignoreDismissedReleases, true, callback)
+}
+
+internal fun checkForUpdateNotices(
+    context: Context,
+    releaseChannel: String,
+    ignoreDismissedReleases: Boolean = true,
+    callback: (UpdateCheckResult) -> Unit
+) {
+    if (BuildConfig.RELEASE_CHANNEL == "nightly") {
+        checkForNightlyUpdate(context, ignoreDismissedReleases) { nightly ->
+            if (nightly.hasAnnouncement) callback(nightly)
+            else checkForUpdate(context, releaseChannel, ignoreDismissedReleases, callback)
+        }
+    } else checkForUpdate(context, releaseChannel, ignoreDismissedReleases, callback)
+}
+
+private fun checkRelease(
+    context: Context,
+    releaseChannel: String,
+    ignoreDismissedReleases: Boolean,
+    nightly: Boolean,
     callback: (UpdateCheckResult) -> Unit
 ) {
     if (!shouldUseGithubUpdateChecks(context)) {
@@ -46,7 +83,7 @@ internal fun checkForUpdate(
     }
 
     val request = Request.Builder()
-        .url(successorReleasesApiUrl())
+        .url(if (nightly) "https://api.github.com/repos/palsoftware/pastiera/releases?per_page=20" else successorReleasesApiUrl())
         .header("Accept", "application/vnd.github+json")
         .build()
 
@@ -69,7 +106,9 @@ internal fun checkForUpdate(
                 }
 
                 val latestRelease = try {
-                    findLatestRelease(parseGitHubReleases(JSONArray(body)), releaseChannel)
+                    val releases = parseGitHubReleases(JSONArray(body))
+                    if (nightly) findNewerNightlyRelease(releases, BuildConfig.VERSION_NAME)
+                    else findLatestRelease(releases, releaseChannel)
                 } catch (_: Exception) {
                     postResult(callback, UpdateCheckResult(successful = false))
                     return
@@ -81,7 +120,7 @@ internal fun checkForUpdate(
 
                 val releaseTag = latestRelease.tagName
                 if (ignoreDismissedReleases) {
-                    val isDismissed = SettingsManager.isReleaseDismissed(context, releaseTag)
+                    val isDismissed = SettingsManager.isReleaseDismissed(context, if (nightly) "pastiera-nightly:$releaseTag" else releaseTag)
                     if (isDismissed) {
                         // Release was dismissed, don't show update
                         postResult(callback, UpdateCheckResult(successful = true))
@@ -96,7 +135,9 @@ internal fun checkForUpdate(
                         hasAnnouncement = true,
                         releaseTag = releaseTag,
                         displayName = latestRelease.displayName,
-                        releasePageUrl = latestRelease.releasePageUrl
+                        releasePageUrl = latestRelease.releasePageUrl,
+                        downloadUrl = latestRelease.downloadUrl,
+                        isNightlyUpdate = nightly
                     )
                 )
             }
@@ -136,4 +177,26 @@ private fun openUrl(context: Context, url: String) {
     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     context.startActivity(intent)
+}
+
+internal fun showReleaseNotice(context: Context, result: UpdateCheckResult) {
+    val tag = result.releaseTag ?: return
+    val name = result.displayName ?: return
+    if (!result.isNightlyUpdate) {
+        showUpdateDialog(context, tag, name, result.releasePageUrl)
+        return
+    }
+    val builder = AlertDialog.Builder(context)
+        .setTitle(R.string.nightly_update_title)
+        .setMessage(context.getString(R.string.nightly_update_message, name))
+        .setPositiveButton(R.string.nightly_update_open) { _, _ ->
+            openUrl(context, result.releasePageUrl ?: "https://github.com/palsoftware/pastiera/releases")
+        }
+        .setNeutralButton(R.string.successor_dialog_later) { _, _ ->
+            SettingsManager.addDismissedRelease(context, "pastiera-nightly:$tag")
+        }
+    result.downloadUrl?.let { url ->
+        builder.setNegativeButton(R.string.nightly_update_download) { _, _ -> openUrl(context, url) }
+    }
+    builder.show()
 }

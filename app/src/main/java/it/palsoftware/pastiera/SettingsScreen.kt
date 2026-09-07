@@ -172,13 +172,13 @@ fun SettingsScreen(
     // Automatic update check on screen open (only once, respecting dismissed releases)
     if (currentDestination == SettingsDestination.Main && shouldUseGithubUpdateChecks(context)) {
         LaunchedEffect(Unit) {
-            checkForUpdate(
+            it.palsoftware.pastiera.update.checkForUpdateNotices(
                 context = context,
                 releaseChannel = BuildConfig.RELEASE_CHANNEL,
                 ignoreDismissedReleases = true
             ) { result ->
                 if (result.hasAnnouncement && result.releaseTag != null && result.displayName != null) {
-                    showUpdateDialog(context, result.releaseTag, result.displayName, result.releasePageUrl)
+                    it.palsoftware.pastiera.update.showReleaseNotice(context, result)
                 }
             }
         }
@@ -365,6 +365,8 @@ private fun SettingsMainScreen(
     onAppLanguageClick: () -> Unit,
     onOpenSettingEntry: (SettingEntry) -> Unit
 ) {
+    var checkingNightly by remember { mutableStateOf(false) }
+
     var searchQuery by rememberSaveable { mutableStateOf("") }
     val keyboardController = LocalSoftwareKeyboardController.current
     val searchResults = remember(searchQuery, context) {
@@ -566,6 +568,23 @@ private fun SettingsMainScreen(
                 linkId = SettingLinkIds.MAIN_ABOUT,
                 onClick = onAboutClick
             )
+
+            if (BuildConfig.RELEASE_CHANNEL == "nightly" && shouldUseGithubUpdateChecks(context)) {
+                SettingsCategoryRow(
+                    icon = Icons.Filled.Code,
+                    title = stringResource(if (checkingNightly) R.string.nightly_update_checking else R.string.nightly_update_settings_title),
+                    description = stringResource(R.string.nightly_update_settings_description),
+                    enabled = !checkingNightly,
+                    onClick = {
+                        checkingNightly = true
+                        it.palsoftware.pastiera.update.checkForNightlyUpdate(context, ignoreDismissedReleases = false) { result ->
+                            checkingNightly = false
+                            if (result.hasAnnouncement) it.palsoftware.pastiera.update.showReleaseNotice(context, result)
+                            else Toast.makeText(context, if (result.successful) R.string.nightly_update_current else R.string.settings_update_check_failed, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                )
+            }
 
             if (shouldUseGithubUpdateChecks(context)) {
                 SettingsCategoryRow(

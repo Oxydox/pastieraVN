@@ -467,13 +467,13 @@ fun KeyboardSetupScreen(
     // Automatic update check on screen open (only once, respecting dismissed releases)
     if (shouldUseGithubUpdateChecks(context)) {
         LaunchedEffect(Unit) {
-            checkForUpdate(
+            it.palsoftware.pastiera.update.checkForUpdateNotices(
                 context = context,
                 releaseChannel = BuildConfig.RELEASE_CHANNEL,
                 ignoreDismissedReleases = true
             ) { result ->
                 if (result.hasAnnouncement && result.releaseTag != null && result.displayName != null) {
-                    showUpdateDialog(context, result.releaseTag, result.displayName, result.releasePageUrl)
+                    it.palsoftware.pastiera.update.showReleaseNotice(context, result)
                 }
             }
         }

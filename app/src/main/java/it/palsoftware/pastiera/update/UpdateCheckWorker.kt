@@ -37,7 +37,7 @@ class UpdateCheckWorker(
         val completedRef = AtomicBoolean(false)
         val latch = CountDownLatch(1)
 
-        checkForUpdate(
+        checkForUpdateNotices(
             context = context,
             releaseChannel = BuildConfig.RELEASE_CHANNEL,
             // Respect releases dismissed by the user via the dialog.
@@ -61,7 +61,8 @@ class UpdateCheckWorker(
                 NotificationHelper.showUpdateAvailableNotification(
                     context = context,
                     displayName = result.displayName,
-                    releasePageUrl = result.releasePageUrl
+                    releasePageUrl = result.releasePageUrl,
+                    isNightlyUpdate = result.isNightlyUpdate
                 )
             }
         }
