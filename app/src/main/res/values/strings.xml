@@ -864,8 +864,8 @@
     <!-- Update Notifications -->
     <string name="notification_update_channel_name">Pastiera Updates</string>
     <string name="notification_update_channel_description">Notifications about new Pastiera versions</string>
-    <string name="notification_update_available_title">Pastiera - New update available</string>
-    <string name="notification_update_available_text">A new version of Pastiera is available (%1$s)</string>
+    <string name="notification_successor_release_title">Plektra release available</string>
+    <string name="notification_successor_release_text">%1$s is available as the successor to Pastiera.</string>
     
     <!-- Speech Recognition -->
     <string name="speech_recognition_prompt">Speak now...</string>
@@ -1052,16 +1052,15 @@ Each key can be configured as Keycode, Action, Native Ctrl, or None. Use overrid
     <!-- Settings Screen -->
     <string name="settings_support_ko_fi">Support on Ko-fi</string>
     <string name="settings_nav_mode_configure">Configure navigation mode key mappings</string>
-    <string name="settings_update_section_title">Updates</string>
-    <string name="settings_update_section_description">Check the latest release on GitHub.</string>
-    <string name="settings_update_checking">Checking for updates…</string>
-    <string name="settings_update_up_to_date">App is up to date.</string>
+    <string name="settings_update_section_title">Plektra</string>
+    <string name="settings_update_section_description">Check for a new Plektra successor release.</string>
+    <string name="settings_update_checking">Checking Plektra releases…</string>
+    <string name="settings_update_up_to_date">No Plektra release found.</string>
     <string name="settings_update_check_failed">Unable to reach GitHub.</string>
-    <string name="update_dialog_title">New update available</string>
-    <string name="update_dialog_message">Version %1$s is available on GitHub.</string>
-    <string name="update_dialog_open_github">Open GitHub</string>
-    <string name="update_dialog_later">Later</string>
-    <string name="update_dialog_download_apk">Download APK</string>
+    <string name="successor_dialog_title">Pastiera has a successor</string>
+    <string name="successor_dialog_message">Plektra succeeds Pastiera. %1$s is available on GitHub.</string>
+    <string name="successor_dialog_open_release">View Plektra release</string>
+    <string name="successor_dialog_later">Later</string>
     
     <!-- Auto Correct Settings -->
     <string name="auto_correct_ricette_pastiera_name">Ricette Pastiera</string>
@@ -1490,9 +1489,9 @@ Each key can be configured as Keycode, Action, Native Ctrl, or None. Use overrid
     <string name="clipboard_pin">Pin</string>
     <string name="clipboard_unpin">Unpin</string>
     <string name="clipboard_delete">Delete</string>
+    <string name="clipboard_retention_apply">Apply</string>
     <string name="experimental_candidates_view_title">Experimental candidates view</string>
     <string name="experimental_candidates_view_description">Uses an alternative Android display mode for the hardware keyboard. May cause display problems.</string>
-    <string name="clipboard_retention_apply">Apply</string>
     <string name="clipboard_retention_time_title">Clipboard Retention Time</string>
     <string name="clipboard_retention_time_description">0 = never delete clips</string>
     <string name="clipboard_retention_time_minutes">%1$d minutes</string>

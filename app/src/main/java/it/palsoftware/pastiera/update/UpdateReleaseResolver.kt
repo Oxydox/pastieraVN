@@ -1,23 +1,38 @@
 package it.palsoftware.pastiera.update
 
-internal data class ReleaseAsset(
-    val name: String,
-    val browserDownloadUrl: String?
-)
+import org.json.JSONArray
 
 internal data class GitHubRelease(
     val tagName: String,
+    val name: String?,
     val prerelease: Boolean,
     val draft: Boolean,
-    val htmlUrl: String?,
-    val assets: List<ReleaseAsset>
+    val htmlUrl: String?
 )
 
 internal data class ReleaseInfo(
     val tagName: String,
-    val downloadUrl: String?,
+    val displayName: String,
     val releasePageUrl: String?
 )
+
+internal fun parseGitHubReleases(releases: JSONArray): List<GitHubRelease> =
+    buildList {
+        for (index in 0 until releases.length()) {
+            val release = releases.optJSONObject(index) ?: continue
+            val tagName = release.optString("tag_name").takeIf(String::isNotBlank) ?: continue
+
+            add(
+                GitHubRelease(
+                    tagName = tagName,
+                    name = release.optString("name").takeIf(String::isNotBlank),
+                    prerelease = release.optBoolean("prerelease"),
+                    draft = release.optBoolean("draft"),
+                    htmlUrl = release.optString("html_url").takeIf(String::isNotBlank)
+                )
+            )
+        }
+    }
 
 internal fun findLatestRelease(releases: List<GitHubRelease>, releaseChannel: String): ReleaseInfo? {
     val normalizedChannel = releaseChannel.lowercase()
@@ -33,19 +48,13 @@ internal fun findLatestRelease(releases: List<GitHubRelease>, releaseChannel: St
 
         return ReleaseInfo(
             tagName = release.tagName,
-            downloadUrl = findApkDownloadUrl(release.assets),
+            displayName = release.name?.takeIf(String::isNotBlank) ?: release.tagName,
             releasePageUrl = release.htmlUrl?.takeIf(String::isNotBlank)
         )
     }
 
     return null
 }
-
-internal fun findApkDownloadUrl(assets: List<ReleaseAsset>): String? =
-    assets.firstNotNullOfOrNull { asset ->
-        val isApk = asset.name.lowercase().endsWith(".apk")
-        if (isApk) asset.browserDownloadUrl?.takeIf(String::isNotBlank) else null
-    }
 
 internal fun normalizeReleaseVersion(version: String): String =
     version.removePrefix("nightly/").removePrefix("v").removePrefix("V")

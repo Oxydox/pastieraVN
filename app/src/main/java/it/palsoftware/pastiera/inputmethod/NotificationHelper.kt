@@ -25,7 +25,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.IconCompat
 import it.palsoftware.pastiera.R
 import it.palsoftware.pastiera.SettingsManager
-import it.palsoftware.pastiera.update.GITHUB_RELEASES_PAGE
+import it.palsoftware.pastiera.update.successorReleasesPage
 
 /**
  * Helper for managing app notifications.
@@ -260,8 +260,7 @@ object NotificationHelper {
      */
     fun showUpdateAvailableNotification(
         context: Context,
-        latestVersion: String,
-        downloadUrl: String?,
+        displayName: String,
         releasePageUrl: String?
     ) {
         if (!hasNotificationPermission(context)) {
@@ -275,8 +274,7 @@ object NotificationHelper {
             createUpdateNotificationChannel(context)
         }
         
-        // Open the direct APK download if available, otherwise the GitHub releases page.
-        val targetUrl = downloadUrl ?: releasePageUrl ?: GITHUB_RELEASES_PAGE
+        val targetUrl = releasePageUrl ?: successorReleasesPage()
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(targetUrl)).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
@@ -295,11 +293,11 @@ object NotificationHelper {
         )
         
         val notificationBuilder = NotificationCompat.Builder(context, UPDATE_CHANNEL_ID)
-            .setContentTitle(context.getString(R.string.notification_update_available_title))
+            .setContentTitle(context.getString(R.string.notification_successor_release_title))
             .setContentText(
                 context.getString(
-                    R.string.notification_update_available_text,
-                    latestVersion
+                    R.string.notification_successor_release_text,
+                    displayName
                 )
             )
             .setSmallIcon(R.drawable.ic_launcher_foreground)

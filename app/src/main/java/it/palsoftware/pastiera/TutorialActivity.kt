@@ -314,12 +314,11 @@ fun TutorialScreen(
         LaunchedEffect(Unit) {
             checkForUpdate(
                 context = context,
-                currentVersion = BuildConfig.VERSION_NAME,
                 releaseChannel = BuildConfig.RELEASE_CHANNEL,
                 ignoreDismissedReleases = true
-            ) { hasUpdate, latestVersion, downloadUrl, releasePageUrl ->
-                if (hasUpdate && latestVersion != null) {
-                    showUpdateDialog(context, latestVersion, downloadUrl, releasePageUrl)
+            ) { result ->
+                if (result.hasAnnouncement && result.releaseTag != null && result.displayName != null) {
+                    showUpdateDialog(context, result.releaseTag, result.displayName, result.releasePageUrl)
                 }
             }
         }

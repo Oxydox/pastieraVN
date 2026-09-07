@@ -915,11 +915,10 @@ Jede Taste kann als Keycode, Aktion, Native Ctrl oder Keine konfiguriert werden.
     <string name="clipboard_retention_time_title">Aufbewahrungszeit der Zwischenablage</string>
     <string name="clipboard_retention_time_description">0 = nie löschen</string>
     <string name="clipboard_retention_time_minutes">%1$d Minuten</string>
-    <string name="update_dialog_title">Neues Update verfügbar</string>
-    <string name="update_dialog_message">Version %1$s ist auf GitHub verfügbar.</string>
-    <string name="update_dialog_open_github">GitHub öffnen</string>
-    <string name="update_dialog_later">Später</string>
-    <string name="update_dialog_download_apk">APK herunterladen</string>
+    <string name="successor_dialog_title">Pastiera hat einen Nachfolger</string>
+    <string name="successor_dialog_message">Plektra folgt auf Pastiera. %1$s ist auf GitHub verfügbar.</string>
+    <string name="successor_dialog_open_release">Plektra-Veröffentlichung ansehen</string>
+    <string name="successor_dialog_later">Später</string>
     <string name="custom_input_styles_title">Eingabesprachen</string>
     <string name="keyboards_devices_title">Tastaturen &amp; Geräte</string>
     <string name="keyboard_switching_section_title">Automatischer Wechsel</string>
@@ -1192,8 +1191,8 @@ Jede Taste kann als Keycode, Aktion, Native Ctrl oder Keine konfiguriert werden.
     <string name="power_shortcuts_press_key">Zum Starten die Shortcut-Taste drücken</string>
     <string name="notification_update_channel_name">Pastiera-Updates</string>
     <string name="notification_update_channel_description">Benachrichtigungen über neue Pastiera-Versionen</string>
-    <string name="notification_update_available_title">Pastiera - Neues Update verfügbar</string>
-    <string name="notification_update_available_text">Eine neue Version von Pastiera ist verfügbar (%1$s)</string>
+    <string name="notification_successor_release_title">Plektra-Veröffentlichung verfügbar</string>
+    <string name="notification_successor_release_text">%1$s ist als Nachfolger von Pastiera verfügbar.</string>
     <string name="speech_recognition_error_no_match">Kein Text erkannt. Bitte erneut versuchen.</string>
     <string name="speech_recognition_error_timeout">Keine Spracheingabe erkannt.</string>
     <string name="speech_recognition_error_permission">Mikrofonberechtigung verweigert.</string>
@@ -1202,10 +1201,10 @@ Jede Taste kann als Keycode, Aktion, Native Ctrl oder Keine konfiguriert werden.
     <string name="speech_recognition_error_not_available">Spracherkennung nicht verfügbar.</string>
     <string name="nav_mode_warning_icon">⚠</string>
     <string name="emoji_category_emoticons">Emoticons</string>
-    <string name="settings_update_section_title">Updates</string>
-    <string name="settings_update_section_description">Neueste Veröffentlichung auf GitHub prüfen.</string>
-    <string name="settings_update_checking">Suche nach Updates…</string>
-    <string name="settings_update_up_to_date">App ist auf dem neuesten Stand.</string>
+    <string name="settings_update_section_title">Plektra</string>
+    <string name="settings_update_section_description">Nach einer neuen Plektra-Veröffentlichung suchen.</string>
+    <string name="settings_update_checking">Prüfe Plektra-Veröffentlichungen…</string>
+    <string name="settings_update_up_to_date">Keine Plektra-Veröffentlichung gefunden.</string>
     <string name="settings_update_check_failed">GitHub konnte nicht erreicht werden.</string>
     <string name="languages_title">Sprachen</string>
     <string name="languages_description">Sprachen zum Android-Eingabemethoden-Auswähler hinzufügen. Es werden nur Sprachen mit Wörterbuch angezeigt, die keine Systemsprachen sind.</string>

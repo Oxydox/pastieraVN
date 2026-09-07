@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import it.palsoftware.pastiera.BuildConfig
 import it.palsoftware.pastiera.R
 import it.palsoftware.pastiera.SettingsManager
 import okhttp3.Call
@@ -14,157 +15,121 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.json.JSONArray
-import org.json.JSONObject
 import java.io.IOException
 
-private const val GITHUB_RELEASES_URL =
-    "https://api.github.com/repos/palsoftware/pastiera/releases?per_page=20"
-const val GITHUB_RELEASES_PAGE =
-    "https://github.com/palsoftware/pastiera/releases"
+internal fun successorReleasesApiUrl(): String =
+    "https://api.github.com/repos/${BuildConfig.SUCCESSOR_GITHUB_REPOSITORY}/releases?per_page=20"
+
+internal fun successorReleasesPage(): String =
+    "https://github.com/${BuildConfig.SUCCESSOR_GITHUB_REPOSITORY}/releases"
 
 private val client = OkHttpClient()
 private val mainHandler = Handler(Looper.getMainLooper())
 
-fun checkForUpdate(
+internal data class UpdateCheckResult(
+    val successful: Boolean,
+    val hasAnnouncement: Boolean = false,
+    val releaseTag: String? = null,
+    val displayName: String? = null,
+    val releasePageUrl: String? = null
+)
+
+internal fun checkForUpdate(
     context: Context,
-    currentVersion: String,
     releaseChannel: String,
     ignoreDismissedReleases: Boolean = true,
-    callback: (hasUpdate: Boolean, latestVersion: String?, downloadUrl: String?, releasePageUrl: String?) -> Unit
+    callback: (UpdateCheckResult) -> Unit
 ) {
     if (!shouldUseGithubUpdateChecks(context)) {
-        postResult(callback, false, null, null, null)
+        postResult(callback, UpdateCheckResult(successful = true))
         return
     }
 
     val request = Request.Builder()
-        .url(GITHUB_RELEASES_URL)
+        .url(successorReleasesApiUrl())
         .header("Accept", "application/vnd.github+json")
         .build()
 
     client.newCall(request).enqueue(object : Callback {
         override fun onFailure(call: Call, e: IOException) {
-            postResult(callback, false, null, null, null)
+            postResult(callback, UpdateCheckResult(successful = false))
         }
 
         override fun onResponse(call: Call, response: Response) {
             response.use { res ->
                 if (!res.isSuccessful) {
-                    postResult(callback, false, null, null, null)
+                    postResult(callback, UpdateCheckResult(successful = false))
                     return
                 }
 
                 val body = res.body?.string().orEmpty()
                 if (body.isBlank()) {
-                    postResult(callback, false, null, null, null)
+                    postResult(callback, UpdateCheckResult(successful = false))
                     return
                 }
 
-                val latestRelease = findLatestRelease(parseGitHubReleases(JSONArray(body)), releaseChannel)
+                val latestRelease = try {
+                    findLatestRelease(parseGitHubReleases(JSONArray(body)), releaseChannel)
+                } catch (_: Exception) {
+                    postResult(callback, UpdateCheckResult(successful = false))
+                    return
+                }
                 if (latestRelease == null) {
-                    postResult(callback, false, null, null, null)
+                    postResult(callback, UpdateCheckResult(successful = true))
                     return
                 }
 
-                val latestVersion = latestRelease.tagName
-                val normalizedLatest = normalizeReleaseVersion(latestVersion)
-                val normalizedCurrent = normalizeReleaseVersion(currentVersion)
-                
-                val hasUpdate = normalizedLatest != normalizedCurrent
-                
-                // If ignoring dismissed releases, check if this release was dismissed
-                if (hasUpdate && ignoreDismissedReleases) {
-                    val isDismissed = SettingsManager.isReleaseDismissed(context, latestVersion)
+                val releaseTag = latestRelease.tagName
+                if (ignoreDismissedReleases) {
+                    val isDismissed = SettingsManager.isReleaseDismissed(context, releaseTag)
                     if (isDismissed) {
                         // Release was dismissed, don't show update
-                        postResult(callback, false, null, null, null)
+                        postResult(callback, UpdateCheckResult(successful = true))
                         return
                     }
                 }
                 
                 postResult(
                     callback,
-                    hasUpdate,
-                    latestVersion,
-                    latestRelease.downloadUrl,
-                    latestRelease.releasePageUrl
+                    UpdateCheckResult(
+                        successful = true,
+                        hasAnnouncement = true,
+                        releaseTag = releaseTag,
+                        displayName = latestRelease.displayName,
+                        releasePageUrl = latestRelease.releasePageUrl
+                    )
                 )
             }
         }
     })
 }
 
-private fun parseGitHubReleases(releases: JSONArray): List<GitHubRelease> =
-    buildList {
-        for (index in 0 until releases.length()) {
-            val release = releases.optJSONObject(index) ?: continue
-            val tagName = release.optString("tag_name").takeIf(String::isNotBlank) ?: continue
-
-            add(
-                GitHubRelease(
-                    tagName = tagName,
-                    prerelease = release.optBoolean("prerelease"),
-                    draft = release.optBoolean("draft"),
-                    htmlUrl = release.optString("html_url").takeIf(String::isNotBlank),
-                    assets = parseReleaseAssets(release.optJSONArray("assets"))
-                )
-            )
-        }
-    }
-
-private fun parseReleaseAssets(assets: JSONArray?): List<ReleaseAsset> {
-    if (assets == null) return emptyList()
-
-    return buildList {
-        for (index in 0 until assets.length()) {
-            val asset = assets.optJSONObject(index) ?: continue
-            add(parseReleaseAsset(asset))
-        }
-    }
-}
-
-private fun parseReleaseAsset(asset: JSONObject): ReleaseAsset =
-    ReleaseAsset(
-        name = asset.optString("name", ""),
-        browserDownloadUrl = asset.optString("browser_download_url").takeIf(String::isNotBlank)
-    )
-
 private fun postResult(
-    callback: (Boolean, String?, String?, String?) -> Unit,
-    hasUpdate: Boolean,
-    latestVersion: String?,
-    downloadUrl: String?,
-    releasePageUrl: String?
+    callback: (UpdateCheckResult) -> Unit,
+    result: UpdateCheckResult
 ) {
     mainHandler.post {
-        callback(hasUpdate, latestVersion, downloadUrl, releasePageUrl)
+        callback(result)
     }
 }
 
 fun showUpdateDialog(
     context: Context,
-    latestVersion: String,
-    downloadUrl: String?,
+    releaseTag: String,
+    displayName: String,
     releasePageUrl: String?
 ) {
-    val builder = AlertDialog.Builder(context)
-        .setTitle(R.string.update_dialog_title)
-        .setMessage(context.getString(R.string.update_dialog_message, latestVersion))
-        .setPositiveButton(R.string.update_dialog_open_github) { _, _ ->
-            openUrl(context, releasePageUrl ?: GITHUB_RELEASES_PAGE)
+    AlertDialog.Builder(context)
+        .setTitle(R.string.successor_dialog_title)
+        .setMessage(context.getString(R.string.successor_dialog_message, displayName))
+        .setPositiveButton(R.string.successor_dialog_open_release) { _, _ ->
+            openUrl(context, releasePageUrl ?: successorReleasesPage())
         }
-        .setNeutralButton(R.string.update_dialog_later) { _, _ ->
-            // Save dismissed release when user clicks "Later"
-            SettingsManager.addDismissedRelease(context, latestVersion)
+        .setNeutralButton(R.string.successor_dialog_later) { _, _ ->
+            SettingsManager.addDismissedRelease(context, releaseTag)
         }
-
-    if (downloadUrl != null) {
-        builder.setNegativeButton(R.string.update_dialog_download_apk) { _, _ ->
-            openUrl(context, downloadUrl)
-        }
-    }
-
-    builder.create().show()
+        .create()
+        .show()
 }
 
 private fun openUrl(context: Context, url: String) {

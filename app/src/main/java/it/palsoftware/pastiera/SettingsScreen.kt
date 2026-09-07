@@ -325,12 +325,11 @@ fun SettingsScreen(
         LaunchedEffect(Unit) {
             checkForUpdate(
                 context = context,
-                currentVersion = BuildConfig.VERSION_NAME,
                 releaseChannel = BuildConfig.RELEASE_CHANNEL,
                 ignoreDismissedReleases = true
-            ) { hasUpdate, latestVersion, downloadUrl, releasePageUrl ->
-                if (hasUpdate && latestVersion != null) {
-                    showUpdateDialog(context, latestVersion, downloadUrl, releasePageUrl)
+            ) { result ->
+                if (result.hasAnnouncement && result.releaseTag != null && result.displayName != null) {
+                    showUpdateDialog(context, result.releaseTag, result.displayName, result.releasePageUrl)
                 }
             }
         }
@@ -776,18 +775,22 @@ private fun SettingsMainScreen(
                         onCheckingForUpdatesChange(true)
                         checkForUpdate(
                             context = context,
-                            currentVersion = BuildConfig.VERSION_NAME,
                             releaseChannel = BuildConfig.RELEASE_CHANNEL,
                             ignoreDismissedReleases = false
-                        ) { hasUpdate, latestVersion, downloadUrl, releasePageUrl ->
+                        ) { result ->
                             onCheckingForUpdatesChange(false)
                             when {
-                                latestVersion == null -> Toast.makeText(
+                                !result.successful -> Toast.makeText(
                                     context,
                                     context.getString(R.string.settings_update_check_failed),
                                     Toast.LENGTH_SHORT
                                 ).show()
-                                hasUpdate -> showUpdateDialog(context, latestVersion, downloadUrl, releasePageUrl)
+                                result.hasAnnouncement && result.releaseTag != null && result.displayName != null -> showUpdateDialog(
+                                    context,
+                                    result.releaseTag,
+                                    result.displayName,
+                                    result.releasePageUrl
+                                )
                                 else -> Toast.makeText(
                                     context,
                                     context.getString(R.string.settings_update_up_to_date),
