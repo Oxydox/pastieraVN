@@ -25,7 +25,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.activity.compose.BackHandler
 import it.palsoftware.pastiera.R
 
 private enum class StatusBarEditorMode { Extended, Pastierina }
@@ -75,7 +74,6 @@ fun StatusBarButtonsScreen(
             }
         )
     }
-    BackHandler { onBack() }
 
     fun selectExtendedButton(buttonId: String, targetSide: String, targetIndex: Int) {
         if (buttonId != SettingsManager.STATUS_BAR_BUTTON_NONE) {
@@ -755,9 +753,9 @@ private fun SlotPreview(
 ) {
     Surface(
         modifier = Modifier.size(32.dp),
-        color = if (buttonId == SettingsManager.STATUS_BAR_BUTTON_NONE) 
-            MaterialTheme.colorScheme.surface 
-        else 
+        color = if (buttonId == SettingsManager.STATUS_BAR_BUTTON_NONE)
+            MaterialTheme.colorScheme.surface
+        else
             MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
         shape = MaterialTheme.shapes.small
     ) {
@@ -794,7 +792,7 @@ private fun SlotDropdown(
     // Filter out buttons that are already used in other slots (but always keep "none" available)
     val availableButtons = SettingsManager.getAvailableStatusBarButtons()
         .filter { it == SettingsManager.STATUS_BAR_BUTTON_NONE || it !in excludedButtons }
-    
+
     Surface(
         modifier = modifier.fillMaxWidth()
     ) {
@@ -809,9 +807,9 @@ private fun SlotDropdown(
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.SemiBold
             )
-            
+
             Spacer(modifier = Modifier.height(4.dp))
-            
+
             ExposedDropdownMenuBox(
                 expanded = expanded,
                 onExpandedChange = { expanded = it }
@@ -844,7 +842,7 @@ private fun SlotDropdown(
                         .fillMaxWidth()
                         .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                 )
-                
+
                 ExposedDropdownMenu(
                     expanded = expanded,
                     onDismissRequest = { expanded = false }

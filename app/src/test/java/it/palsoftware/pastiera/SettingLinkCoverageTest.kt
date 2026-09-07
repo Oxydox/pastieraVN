@@ -77,21 +77,21 @@ class SettingLinkCoverageTest {
         )
         expectedTargets.forEach { (id, expected) ->
             val route = requireNotNull(SettingLinkRegistry.byId(id)).route
-            val stackEntry = route.toSettingsStackEntry()
+            val stackEntry = route.toSettingsPage()
             assertEquals(SettingsDestination.KeyboardsDevices, stackEntry.destination)
             assertEquals("Incorrect subpage for $id", expected, stackEntry.keyboardsDevicesDestination)
         }
         assertEquals(
             KeyboardsDevicesDestination.Main,
             requireNotNull(SettingLinkRegistry.byId(SettingLinkIds.MAIN_KEYBOARDS_DEVICES))
-                .route.toSettingsStackEntry().keyboardsDevicesDestination
+                .route.toSettingsPage().keyboardsDevicesDestination
         )
     }
 
     @Test
     fun appLanguageLinkResolvesToLanguageScreen() {
         val entry = requireNotNull(SettingLinkRegistry.byId(SettingLinkIds.MAIN_APP_LANGUAGE))
-        assertEquals(SettingsDestination.AppLanguage, entry.route.toSettingsStackEntry().destination)
+        assertEquals(SettingsDestination.AppLanguage, entry.route.toSettingsPage().destination)
     }
 
     @Test

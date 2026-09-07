@@ -36,9 +36,6 @@ class SymCustomizationActivity : LocalizedComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (savedInstanceState == null) {
-            applySlideInFromRightTransition()
-        }
         settingId = intent.getStringExtra(EXTRA_SETTING_ID)
         enableEdgeToEdge()
         setContent {
@@ -77,7 +74,7 @@ class SymCustomizationActivity : LocalizedComponentActivity() {
             }
         }
     }
-    
+
     override fun onPause() {
         super.onPause()
         // Confirm pending restore when activity is paused (user navigates away)
@@ -86,7 +83,7 @@ class SymCustomizationActivity : LocalizedComponentActivity() {
             SettingsManager.confirmPendingRestoreSymPage(this)
         }
     }
-    
+
     override fun onDestroy() {
         super.onDestroy()
         // If activity is destroyed without finish() (e.g., user goes to another app),
@@ -95,9 +92,5 @@ class SymCustomizationActivity : LocalizedComponentActivity() {
             SettingsManager.clearPendingRestoreSymPage(this)
         }
     }
-    
-    override fun finish() {
-        super.finish()
-        applySlideOutToRightTransition()
-    }
+
 }

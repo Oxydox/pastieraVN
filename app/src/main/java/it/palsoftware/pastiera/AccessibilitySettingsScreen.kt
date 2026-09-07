@@ -1,7 +1,6 @@
 package it.palsoftware.pastiera
 
 import android.widget.Toast
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -83,7 +82,6 @@ fun AccessibilitySettingsScreen(
         mutableStateOf(SettingsManager.getOverlappingKeysEnabled(context))
     }
 
-    BackHandler { onBack() }
 
     Scaffold(
         topBar = {

@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Color as AndroidColor
 import android.os.Build
 import android.view.inputmethod.InputMethodManager
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -199,7 +198,8 @@ fun KeyboardThemeScreen(
     var themePickerRequest by remember { mutableStateOf<KeyboardThemePickerRequest?>(null) }
     var assignmentScreenTarget by remember {
         mutableStateOf<SettingsManager.KeyboardThemeTarget?>(
-            if (initialAssignment) initialTarget ?: SettingsManager.KeyboardThemeTarget.HARDWARE else null
+            SettingsManager.KeyboardThemeTarget.entries.firstOrNull { it.name == settingsChild(context, "theme_assignment") }
+                ?: if (initialAssignment) initialTarget ?: SettingsManager.KeyboardThemeTarget.HARDWARE else null
         )
     }
     var overrideEditorRequest by remember { mutableStateOf<KeyboardThemeOverrideEditorRequest?>(null) }
@@ -385,14 +385,6 @@ fun KeyboardThemeScreen(
         draftEditorName = null
     }
 
-    BackHandler {
-        if (assignmentScreenTarget != null) {
-            assignmentScreenTarget = null
-        } else {
-            onBack()
-        }
-    }
-
     Scaffold(
         topBar = {
             Surface(
@@ -410,7 +402,7 @@ fun KeyboardThemeScreen(
                     IconButton(
                         onClick = {
                             if (assignmentScreenTarget != null) {
-                                assignmentScreenTarget = null
+                                context.settingsActivity().finish()
                             } else {
                                 onBack()
                             }
@@ -625,7 +617,7 @@ fun KeyboardThemeScreen(
                     lightThemeName = themeDisplayName(activeThemeOptions, activeLightTheme),
                     darkThemeName = themeDisplayName(activeThemeOptions, activeDarkTheme),
                     modifier = Modifier.padding(horizontal = 16.dp),
-                    onClick = { assignmentScreenTarget = activeTarget }
+                    onClick = { openSettingsChild(context, "theme_assignment", activeTarget.name) }
                 )
             }
 

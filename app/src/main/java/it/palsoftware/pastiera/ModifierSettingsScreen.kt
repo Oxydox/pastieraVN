@@ -1,6 +1,5 @@
 package it.palsoftware.pastiera
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -92,7 +91,6 @@ fun ModifierSettingsScreen(
         AltModifierBinding.DeviceSymProfile("clicks_power") to stringResource(R.string.clicks_power_keyboard_title)
     )
 
-    BackHandler { onBack() }
     Scaffold(
         topBar = {
             Surface(

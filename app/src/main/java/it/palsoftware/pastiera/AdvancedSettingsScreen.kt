@@ -3,7 +3,6 @@ package it.palsoftware.pastiera
 import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
@@ -98,7 +97,7 @@ fun AdvancedSettingsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val prefs = remember { SettingsManager.getPreferences(context) }
-    
+
     // Store the actual value (3 to 25), but display it inverted in the slider (25 to 3)
     var swipeIncrementalThreshold by remember {
         mutableStateOf(SettingsManager.getSwipeIncrementalThreshold(context))
@@ -114,25 +113,12 @@ fun AdvancedSettingsScreen(
     var pendingDeviceChangeRestore by remember {
         mutableStateOf<Pair<Uri, RestoreManager.DeviceChange>?>(null)
     }
-    var navigationDirection by remember { mutableStateOf(AdvancedNavigationDirection.Push) }
-    val navigationStack = remember {
-        mutableStateListOf<AdvancedDestination>(AdvancedDestination.Main)
-    }
-    val currentDestination by remember {
-        derivedStateOf { navigationStack.last() }
-    }
+    val currentDestination = remember { when (settingsChild(context, "advanced")) {
+        "ImeTest" -> AdvancedDestination.ImeTest
+        "TrackpadGestures" -> AdvancedDestination.TrackpadGestures
+        else -> if (context.settingsActivity().intent.data?.let(SettingLinkRegistry::parseSettingLinkUri) in TRACKPAD_SETTING_LINK_IDS) AdvancedDestination.TrackpadGestures else AdvancedDestination.Main
+    } }
     val highlightedSettingId = LocalSettingHighlightId.current
-
-    LaunchedEffect(highlightedSettingId) {
-        if (
-            highlightedSettingId in TRACKPAD_SETTING_LINK_IDS &&
-            navigationStack.last() != AdvancedDestination.TrackpadGestures
-        ) {
-            navigationDirection = AdvancedNavigationDirection.Push
-            navigationStack.add(AdvancedDestination.TrackpadGestures)
-        }
-    }
-    
     // Listen to SharedPreferences changes to update UI when values are restored
     DisposableEffect(prefs) {
         val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
@@ -166,21 +152,11 @@ fun AdvancedSettingsScreen(
     }
 
     fun navigateTo(destination: AdvancedDestination) {
-        navigationDirection = AdvancedNavigationDirection.Push
-        navigationStack.add(destination)
+        openSettingsChild(context, "advanced", when (destination) { AdvancedDestination.Main -> "Main"; AdvancedDestination.ImeTest -> "ImeTest"; AdvancedDestination.TrackpadGestures -> "TrackpadGestures" })
     }
-    
-    fun navigateBack() {
-        if (navigationStack.size > 1) {
-            navigationDirection = AdvancedNavigationDirection.Pop
-            navigationStack.removeAt(navigationStack.lastIndex)
-        } else {
-            onBack()
-        }
-    }
-    
-    BackHandler { navigateBack() }
-    
+    fun navigateBack() { context.settingsActivity().finish() }
+
+
     fun defaultBackupName(): String {
         val formatter = SimpleDateFormat("yyyyMMdd-HHmm", Locale.US)
         return "pastiera-backup-${formatter.format(Date())}.zip"
@@ -285,33 +261,8 @@ fun AdvancedSettingsScreen(
             }
         )
     }
-    
-    AnimatedContent(
-        targetState = currentDestination,
-        transitionSpec = {
-            if (navigationDirection == AdvancedNavigationDirection.Push) {
-                // Forward navigation: new screen enters from right, old screen exits to left
-                slideInHorizontally(
-                    initialOffsetX = { fullWidth -> fullWidth },
-                    animationSpec = tween(250)
-                ) togetherWith slideOutHorizontally(
-                    targetOffsetX = { fullWidth -> -fullWidth },
-                    animationSpec = tween(250)
-                )
-            } else {
-                // Back navigation: current screen exits to right, previous screen enters from left
-                slideInHorizontally(
-                    initialOffsetX = { fullWidth -> -fullWidth },
-                    animationSpec = tween(250)
-                ) togetherWith slideOutHorizontally(
-                    targetOffsetX = { fullWidth -> fullWidth },
-                    animationSpec = tween(250)
-                )
-            }
-        },
-        label = "advanced_navigation",
-        contentKey = { it::class }
-    ) { destination ->
+
+    val destination = currentDestination
         when (destination) {
             AdvancedDestination.Main -> {
                 Scaffold(
@@ -483,7 +434,7 @@ fun AdvancedSettingsScreen(
                                 )
                             }
                         }
-                    
+
                         // Restore
                         Surface(
                             modifier = Modifier
@@ -527,7 +478,7 @@ fun AdvancedSettingsScreen(
                                 )
                             }
                         }
-                    
+
                         // Swipe Incremental Threshold
                         Surface(
                             modifier = Modifier
@@ -563,11 +514,11 @@ fun AdvancedSettingsScreen(
                                     )
                                 }
                                 Slider(
-                                    value = SettingsManager.getMaxSwipeIncrementalThreshold() + 
+                                    value = SettingsManager.getMaxSwipeIncrementalThreshold() +
                                         SettingsManager.getMinSwipeIncrementalThreshold() - swipeIncrementalThreshold,
                                     onValueChange = { newInvertedValue ->
                                         // Invert the slider value (25 to 3) back to stored value (3 to 25)
-                                        val actualValue = SettingsManager.getMaxSwipeIncrementalThreshold() + 
+                                        val actualValue = SettingsManager.getMaxSwipeIncrementalThreshold() +
                                             SettingsManager.getMinSwipeIncrementalThreshold() - newInvertedValue
                                         swipeIncrementalThreshold = actualValue
                                         SettingsManager.setSwipeIncrementalThreshold(context, actualValue)
@@ -580,7 +531,7 @@ fun AdvancedSettingsScreen(
                                 )
                             }
                         }
-                    
+
                         // Clipboard Retention Time
                         Surface(
                             modifier = Modifier
@@ -646,7 +597,7 @@ fun AdvancedSettingsScreen(
                                 }
                             }
                         }
-                    
+
                         Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -742,7 +693,7 @@ fun AdvancedSettingsScreen(
                                 }
                             }
                         }
-                    
+
                         // Show Tutorial
                         Surface(
                             modifier = Modifier
@@ -855,7 +806,7 @@ fun AdvancedSettingsScreen(
             }
 
         }
-    }
+
 }
 
 private sealed class AdvancedDestination {
@@ -864,10 +815,7 @@ private sealed class AdvancedDestination {
     object TrackpadGestures : AdvancedDestination()
 }
 
-private enum class AdvancedNavigationDirection {
-    Push,
-    Pop
-}
+
 
 private val TRACKPAD_SETTING_LINK_IDS = setOf(
     "trackpad.add_word",

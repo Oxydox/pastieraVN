@@ -1,6 +1,5 @@
 package it.palsoftware.pastiera
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -120,7 +119,6 @@ private fun HardwareKeyboardListScreen(
         }
     val detectedProfile = detectedProfileLabels.joinToString(", ")
 
-    BackHandler { onBack() }
 
     Scaffold(
         topBar = {

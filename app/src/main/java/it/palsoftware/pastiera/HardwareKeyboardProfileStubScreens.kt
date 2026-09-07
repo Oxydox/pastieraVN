@@ -10,7 +10,6 @@ import android.provider.Settings
 import android.view.accessibility.AccessibilityManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
@@ -2184,7 +2183,6 @@ private fun HardwareProfileScaffold(
     scrollState: ScrollState = rememberScrollState(),
     content: @Composable () -> Unit
 ) {
-    BackHandler { onBack() }
 
     Scaffold(
         topBar = {

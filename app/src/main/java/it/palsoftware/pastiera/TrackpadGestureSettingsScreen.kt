@@ -2,7 +2,6 @@ package it.palsoftware.pastiera
 
 import android.content.Intent
 import android.net.Uri
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -52,7 +51,7 @@ fun TrackpadGestureSettingsScreen(
         mutableStateOf(SettingsManager.getTrackpadDeleteSwipeThreshold(context))
     }
     var showTutorialDialog by remember { mutableStateOf(false) }
-    var showSensitivitySettings by remember { mutableStateOf(false) }
+    var showSensitivitySettings by remember { mutableStateOf(settingsChild(context, "trackpad") == "sensitivity") }
     var shizukuStatus by remember { mutableStateOf(ShizukuStatus.NotConnected) }
     var trackpadProvider by remember { mutableStateOf(SettingsManager.getTrackpadProvider(context)) }
     var providerMenuExpanded by remember { mutableStateOf(false) }
@@ -73,13 +72,7 @@ fun TrackpadGestureSettingsScreen(
         SettingsManager.SWIPE_TO_DELETE_PROVIDER_TITAN2_KEYCODE to stringResource(R.string.swipe_to_delete_provider_titan2_keycode)
     )
 
-    BackHandler {
-        if (showSensitivitySettings) {
-            showSensitivitySettings = false
-        } else {
-            onBack()
-        }
-    }
+
     LaunchedEffect(highlightedSettingId) {
         when (highlightedSettingId) {
             SettingLinkIds.TRACKPAD_SUGGESTION_SWIPE_THRESHOLD,
@@ -135,7 +128,7 @@ fun TrackpadGestureSettingsScreen(
                     IconButton(
                         onClick = {
                             if (showSensitivitySettings) {
-                                showSensitivitySettings = false
+                                context.settingsActivity().finish()
                             } else {
                                 onBack()
                             }
@@ -586,7 +579,7 @@ fun TrackpadGestureSettingsScreen(
                     .fillMaxWidth()
                     .height(72.dp)
                     .settingRow(SettingLinkIds.TRACKPAD_SENSITIVITY) {
-                        showSensitivitySettings = true
+                        openSettingsChild(context, "trackpad", "sensitivity")
                     }
             ) {
                 Row(

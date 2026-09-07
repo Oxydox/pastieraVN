@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.view.ViewGroup
 import android.widget.ImageView
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -108,7 +107,6 @@ fun AppEnterBehaviorScreen(
         }
     }
 
-    BackHandler { onBack() }
 
     Column(
         modifier = modifier

@@ -1,6 +1,5 @@
 package it.palsoftware.pastiera
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.clickable
@@ -58,16 +57,14 @@ import java.util.Locale
 @Composable
 fun TextExpansionSettingsScreen(onBack: () -> Unit) {
     val context = LocalContext.current
-    var manageSnippets by remember { mutableStateOf(false) }
+    var manageSnippets by remember { mutableStateOf(settingsChild(context, "snippets") == "manage") }
     val settingHighlight = LocalSettingHighlightId.current
     androidx.compose.runtime.LaunchedEffect(settingHighlight) {
         if (settingHighlight?.startsWith("text_expansion.") == true) manageSnippets = false
     }
-    BackHandler {
-        if (manageSnippets) manageSnippets = false else onBack()
-    }
+
     if (manageSnippets) {
-        SnippetsScreen(onBack = { manageSnippets = false })
+        SnippetsScreen(onBack = { context.settingsActivity().finish() })
         return
     }
 
@@ -173,7 +170,7 @@ fun TextExpansionSettingsScreen(onBack: () -> Unit) {
                 }
             )
             Surface(
-                modifier = Modifier.fillMaxWidth().settingRow("text_expansion.snippets.manage") { manageSnippets = true }
+                modifier = Modifier.fillMaxWidth().settingRow("text_expansion.snippets.manage") { openSettingsChild(context, "snippets", "manage") }
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),

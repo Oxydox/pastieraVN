@@ -19,7 +19,6 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -45,10 +44,7 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.Alignment
@@ -160,28 +156,8 @@ fun CustomizationSettingsScreen(
             }
         )
     }
-    var navigationDirection by remember { mutableStateOf(CustomizationNavigationDirection.Push) }
-    val navigationStack = rememberSaveable(saver = customizationNavigationStackSaver) {
-        mutableStateListOf<CustomizationDestination>().apply {
-            val deepLinkedDestination = customizationDestination(initialDestination)
-            add(deepLinkedDestination)
-        }
-    }
+    val currentDestination = CustomizationDestination.entries.firstOrNull { it.name == settingsChild(context, "customization") } ?: customizationDestination(initialDestination)
     val settingHighlightId = LocalSettingHighlightId.current
-    LaunchedEffect(settingHighlightId) {
-        val route = settingHighlightId?.let(SettingLinkRegistry::byId)?.route
-        if (route?.destination == SettingsDestination.Customization) {
-            val target = customizationDestination(route.customizationDestination)
-            if (navigationStack.last() != target) {
-                navigationStack.clear()
-                navigationStack.add(target)
-            }
-        }
-    }
-    val currentDestination by remember {
-        derivedStateOf { navigationStack.last() }
-    }
-
     DisposableEffect(prefs) {
         val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
             when (key) {
@@ -262,52 +238,14 @@ fun CustomizationSettingsScreen(
         prefs.registerOnSharedPreferenceChangeListener(listener)
         onDispose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
     }
-    
+
     fun navigateTo(destination: CustomizationDestination) {
-        navigationDirection = CustomizationNavigationDirection.Push
-        navigationStack.add(destination)
+        openSettingsChild(context, "customization", destination.name)
     }
-    
-    fun navigateBack() {
-        if (navigationStack.size > 1) {
-            navigationDirection = CustomizationNavigationDirection.Pop
-            navigationStack.removeAt(navigationStack.lastIndex)
-        } else {
-            onBack()
-        }
-    }
-    
-    BackHandler { navigateBack() }
-    // AnimatedContent removes inactive pages; retain their scroll state for Back.
-    val pageStates = rememberSaveableStateHolder()
-    
-    AnimatedContent(
-        targetState = currentDestination,
-        transitionSpec = {
-            if (navigationDirection == CustomizationNavigationDirection.Push) {
-                // Forward navigation: new screen enters from right, old screen exits to left
-                slideInHorizontally(
-                    initialOffsetX = { fullWidth -> fullWidth },
-                    animationSpec = tween(250)
-                ) togetherWith slideOutHorizontally(
-                    targetOffsetX = { fullWidth -> -fullWidth },
-                    animationSpec = tween(250)
-                )
-            } else {
-                // Back navigation: current screen exits to right, previous screen enters from left
-                slideInHorizontally(
-                    initialOffsetX = { fullWidth -> -fullWidth },
-                    animationSpec = tween(250)
-                ) togetherWith slideOutHorizontally(
-                    targetOffsetX = { fullWidth -> fullWidth },
-                    animationSpec = tween(250)
-                )
-            }
-        },
-        label = "customization_navigation",
-        contentKey = { it }
-    ) { destination ->
-        pageStates.SaveableStateProvider(destination.name) {
+    fun navigateBack() { context.settingsActivity().finish() }
+
+
+    val destination = currentDestination
         when (destination) {
             CustomizationDestination.Main -> {
                 Scaffold(
@@ -381,7 +319,7 @@ fun CustomizationSettingsScreen(
                                 )
                             }
                         }
-                    
+
                         // Sound Settings
                         Surface(
                             modifier = Modifier
@@ -427,7 +365,7 @@ fun CustomizationSettingsScreen(
                     }
                 }
             }
-            
+
             CustomizationDestination.Variations -> {
                 VariationCustomizationScreen(
                     modifier = modifier,
@@ -444,7 +382,7 @@ fun CustomizationSettingsScreen(
                     }
                 )
             }
-            
+
             CustomizationDestination.LauncherShortcuts -> {
                 StarterLauncherShortcutsSettingsScreen(
                     modifier = modifier,
@@ -577,7 +515,7 @@ fun CustomizationSettingsScreen(
                     onBack = { navigateBack() }
                 )
             }
-            
+
             CustomizationDestination.StatusBarButtons -> {
                 StatusBarButtonsScreen(
                     modifier = modifier,
@@ -618,8 +556,6 @@ fun CustomizationSettingsScreen(
                 )
             }
         }
-    }
-    }
 }
 
 @Composable
@@ -2171,20 +2107,7 @@ private enum class CustomizationDestination {
     Sounds
 }
 
-private val customizationNavigationStackSaver =
-    listSaver<SnapshotStateList<CustomizationDestination>, String>(
-        save = { stack -> stack.map(CustomizationDestination::name) },
-        restore = { routes ->
-            mutableStateListOf<CustomizationDestination>().apply {
-                addAll(routes.map(CustomizationDestination::valueOf))
-            }
-        }
-    )
 
-private enum class CustomizationNavigationDirection {
-    Push,
-    Pop
-}
 
 private fun customizationDestination(destination: String?): CustomizationDestination = when (destination) {
     SettingsActivity.CUSTOMIZATION_DESTINATION_VARIATIONS -> CustomizationDestination.Variations
