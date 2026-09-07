@@ -208,6 +208,10 @@ object SettingLinkRegistry {
 
     const val LINK_SCHEME = "pastiera"
     const val LINK_HOST = "setting"
+    const val WEB_LINK_HOST = "pastiera.eu"
+    const val ALTERNATE_WEB_LINK_HOST = "pkb.rocks"
+    const val WEB_LINK_PATH_PREFIX = "/settings/"
+    private val settingIdPattern = Regex("^[a-z0-9_]+(\\.[a-z0-9_]+)+$")
 
     private fun entry(
         id: String,
@@ -953,7 +957,7 @@ object SettingLinkRegistry {
         return candidate
     }
 
-    fun buildLink(id: String): String = "$LINK_SCHEME://$LINK_HOST/$id"
+    fun buildLink(id: String): String = "https://$WEB_LINK_HOST$WEB_LINK_PATH_PREFIX$id"
 
     /**
      * Markdown link used for sharing. With [withDescription] the localized
@@ -971,11 +975,15 @@ object SettingLinkRegistry {
         parseSettingLink(uri.scheme, uri.host, uri.path)
 
     fun parseSettingLink(scheme: String?, host: String?, path: String?): String? {
-        if (scheme != LINK_SCHEME || host != LINK_HOST) return null
-        return path
-            ?.trim()
-            ?.removePrefix("/")
-            ?.takeIf { it.isNotEmpty() }
+        val id = when {
+            scheme == LINK_SCHEME && host == LINK_HOST ->
+                path?.trim()?.removePrefix("/")
+            scheme == "https" && (host == WEB_LINK_HOST || host == ALTERNATE_WEB_LINK_HOST) ->
+                path?.takeIf { it.startsWith(WEB_LINK_PATH_PREFIX) }
+                    ?.removePrefix(WEB_LINK_PATH_PREFIX)
+            else -> null
+        }
+        return id?.takeIf(settingIdPattern::matches)
     }
 
     /**
