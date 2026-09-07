@@ -118,7 +118,7 @@ fun AppEnterBehaviorScreen(
             }
         }
 
-        Surface(modifier = Modifier.fillMaxWidth()) {
+        Surface(modifier = Modifier.fillMaxWidth().settingRow("app_enter_behavior.enabled")) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -212,6 +212,7 @@ fun AppEnterBehaviorScreen(
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                .settingRow("app_enter_behavior.overrides")
         )
 
         overrides.forEach { override ->
@@ -287,7 +288,7 @@ private fun EnterPresetSelector(
     onPresetSelected: (String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    Surface(modifier = Modifier.fillMaxWidth()) {
+    Surface(modifier = Modifier.fillMaxWidth().settingRow("app_enter_behavior.preset")) {
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
             Text(
                 text = stringResource(R.string.app_enter_behaviour_preset_title),
@@ -341,7 +342,7 @@ private fun EnterAdditionalSendShortcutSelector(
     onShortcutSelected: (String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    Surface(modifier = Modifier.fillMaxWidth()) {
+    Surface(modifier = Modifier.fillMaxWidth().settingRow("app_enter_behavior.additional_send_shortcut")) {
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
             Text(
                 text = stringResource(R.string.app_enter_behaviour_additional_send_shortcut_label),

@@ -135,7 +135,7 @@ internal fun VirtualKeyboardBehaviorSettingsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(82.dp)
-                    .clickable { showSoftwareKeyboardLayoutStyleMenu = true }
+                    .settingRow("on_screen.layout_style") { showSoftwareKeyboardLayoutStyleMenu = true }
             ) {
                 Row(
                     modifier = Modifier
@@ -203,6 +203,7 @@ internal fun VirtualKeyboardBehaviorSettingsScreen(
 
             ModifierTapLatchRow(
                 title = stringResource(R.string.software_keyboard_number_row_title),
+                linkId = "on_screen.number_row",
                 description = stringResource(R.string.software_keyboard_number_row_description),
                 checked = numberRowEnabled,
                 onCheckedChange = { enabled ->
@@ -227,6 +228,7 @@ internal fun VirtualKeyboardBehaviorSettingsScreen(
             ) {
                 SoftwareKeyboardModifierSelection(
                     title = stringResource(R.string.software_keyboard_left_modifier_key_title),
+                    linkId = "on_screen.left_modifier",
                     selected = leftModifierKey,
                     modifier = Modifier.weight(1f),
                     onSelected = { selected ->
@@ -236,6 +238,7 @@ internal fun VirtualKeyboardBehaviorSettingsScreen(
                 )
                 SoftwareKeyboardModifierSelection(
                     title = stringResource(R.string.software_keyboard_right_modifier_key_title),
+                    linkId = "on_screen.right_modifier",
                     selected = rightModifierKey,
                     modifier = Modifier.weight(1f),
                     onSelected = { selected ->
@@ -249,6 +252,7 @@ internal fun VirtualKeyboardBehaviorSettingsScreen(
 
             ModifierTapLatchRow(
                 title = stringResource(R.string.software_keyboard_nearest_key_touch_title),
+                linkId = "on_screen.nearest_key_touch",
                 description = stringResource(R.string.software_keyboard_nearest_key_touch_description),
                 checked = nearestKeyTouchEnabled,
                 onCheckedChange = { enabled ->
@@ -259,6 +263,7 @@ internal fun VirtualKeyboardBehaviorSettingsScreen(
 
             ModifierTapLatchRow(
                 title = stringResource(R.string.software_keyboard_long_press_layer_popup_title),
+                linkId = "on_screen.layer_popup",
                 description = stringResource(R.string.software_keyboard_long_press_layer_popup_description),
                 checked = longPressLayerPopupEnabled,
                 onCheckedChange = { enabled ->
@@ -270,6 +275,7 @@ internal fun VirtualKeyboardBehaviorSettingsScreen(
             if (longPressLayerPopupEnabled) {
                 ModifierTapLatchRow(
                     title = stringResource(R.string.software_keyboard_long_press_layer_popup_below_key_title),
+                    linkId = "on_screen.layer_popup_below",
                     description = stringResource(R.string.software_keyboard_long_press_layer_popup_below_key_description),
                     checked = longPressLayerPopupBelowKey,
                     indent = true,
@@ -285,7 +291,7 @@ internal fun VirtualKeyboardBehaviorSettingsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(74.dp)
-                    .clickable(onClick = onOpenKeyboardTheme)
+                    .settingRow("on_screen.theme", onOpenKeyboardTheme)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -318,6 +324,7 @@ private fun VirtualKeyboardSectionTitle(title: String) {
 @Composable
 private fun SoftwareKeyboardModifierSelection(
     title: String,
+    linkId: String? = null,
     selected: SettingsManager.SoftwareKeyboardModifierKey,
     modifier: Modifier = Modifier,
     onSelected: (SettingsManager.SoftwareKeyboardModifierKey) -> Unit
@@ -326,7 +333,7 @@ private fun SoftwareKeyboardModifierSelection(
     Surface(
         modifier = modifier
             .height(82.dp)
-            .clickable { expanded = true },
+            .settingRow(linkId) { expanded = true },
         shape = MaterialTheme.shapes.medium,
         tonalElevation = 1.dp
     ) {
@@ -399,13 +406,14 @@ private fun softwareKeyboardModifierKeyLabel(
 @Composable
 private fun ModifierTapLatchRow(
     title: String,
+    linkId: String? = null,
     description: String,
     checked: Boolean,
     indent: Boolean = false,
     onCheckedChange: (Boolean) -> Unit
 ) {
     Surface(
-        modifier = Modifier
+        modifier = Modifier.settingRow(linkId)
             .fillMaxWidth()
             .height(74.dp)
     ) {

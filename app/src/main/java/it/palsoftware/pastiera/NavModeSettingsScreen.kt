@@ -164,7 +164,7 @@ fun NavModeSettingsScreen(
         
         // Enable/Disable toggle
         Surface(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().settingRow("nav_mode.enabled")
         ) {
             Row(
                 modifier = Modifier
@@ -199,7 +199,7 @@ fun NavModeSettingsScreen(
             val layoutAwareCtrlShortcutsAvailable = !navModeCtrlHoldEnabled
 
             Surface(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().settingRow("nav_mode.ctrl_hold")
             ) {
                 Row(
                     modifier = Modifier
@@ -231,7 +231,7 @@ fun NavModeSettingsScreen(
             }
 
             Surface(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().settingRow("nav_mode.layout_aware_ctrl_shortcuts")
             ) {
                 Row(
                     modifier = Modifier

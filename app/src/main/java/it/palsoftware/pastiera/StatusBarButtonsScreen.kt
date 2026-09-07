@@ -186,7 +186,7 @@ fun StatusBarButtonsScreen(
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onOpenModifiers)
+                .settingRow(SettingLinkIds.MODIFIERS_INDICATORS, onOpenModifiers)
         ) {
             Row(
                 modifier = Modifier
@@ -224,7 +224,7 @@ fun StatusBarButtonsScreen(
         SettingsSectionDivider(stringResource(R.string.status_bar_style_section))
         SingleChoiceSegmentedButtonRow(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxWidth().settingRow("status_bar.presentation")
                 .padding(horizontal = 16.dp, vertical = 10.dp)
         ) {
             StatusBarEditorMode.entries.forEachIndexed { index, mode ->
@@ -268,7 +268,7 @@ fun StatusBarButtonsScreen(
         )
 
         SettingsSectionDivider(stringResource(R.string.device_specific_interface_section))
-        Surface(modifier = Modifier.fillMaxWidth()) {
+        Surface(modifier = Modifier.fillMaxWidth().settingRow("status_bar.rounded_corners")) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -299,7 +299,7 @@ fun StatusBarButtonsScreen(
 
         if (titan2EliteRoundedCornerInsetsEnabled) {
             Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)) {
-                Text(stringResource(R.string.titan2_elite_top_corner_title), style = MaterialTheme.typography.titleMedium,
+                Text(stringResource(R.string.titan2_elite_top_corner_title), modifier = Modifier.fillMaxWidth().settingRow("status_bar.top_corner"), style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface)
                 Text(stringResource(R.string.titan2_elite_top_corner_description),
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -316,7 +316,7 @@ fun StatusBarButtonsScreen(
                     }
                 }
                 Text(stringResource(R.string.titan2_elite_max_icon_shrink_title, maxIconShrink),
-                    style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                    modifier = Modifier.fillMaxWidth().settingRow("status_bar.max_icon_shrink"), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
                 Text(stringResource(R.string.titan2_elite_max_icon_shrink_description),
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Slider(value = maxIconShrink.toFloat(), valueRange = 0f..90f, steps = 8,
@@ -327,7 +327,7 @@ fun StatusBarButtonsScreen(
 
         if (editorMode == StatusBarEditorMode.Extended) {
             SettingsSectionDivider(stringResource(R.string.extended_status_bar_features_section))
-            Surface(modifier = Modifier.fillMaxWidth()) {
+            Surface(modifier = Modifier.fillMaxWidth().settingRow("status_bar.variations_visible")) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -376,7 +376,7 @@ fun StatusBarButtonsScreen(
             }
 
             if (variationsVisible) {
-                Surface(modifier = Modifier.fillMaxWidth()) {
+                Surface(modifier = Modifier.fillMaxWidth().settingRow("status_bar.variation_slots")) {
                     Column(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
                     ) {
@@ -412,7 +412,7 @@ fun StatusBarButtonsScreen(
                     }
                 }
 
-                Surface(modifier = Modifier.fillMaxWidth()) {
+                Surface(modifier = Modifier.fillMaxWidth().settingRow("status_bar.resize_variations")) {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -441,7 +441,7 @@ fun StatusBarButtonsScreen(
                 }
 
                 Surface(
-                    modifier = Modifier.fillMaxWidth().clickable(onClick = onCustomizeVariations)
+                    modifier = Modifier.fillMaxWidth().settingRow("customization.variations", onCustomizeVariations)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
@@ -472,6 +472,7 @@ fun StatusBarButtonsScreen(
             SettingsSectionDivider(stringResource(R.string.status_bar_buttons_section))
             SlotGroup(
                 title = stringResource(R.string.status_bar_slots_left),
+                linkId = "status_bar.extended_left",
                 slots = leftSlots,
                 slotPrefix = "L",
                 onSlotSelected = { index, buttonId -> selectExtendedButton(buttonId, "left", index) },
@@ -486,6 +487,7 @@ fun StatusBarButtonsScreen(
             )
             SlotGroup(
                 title = stringResource(R.string.status_bar_slots_right),
+                linkId = "status_bar.extended_right",
                 slots = rightSlots,
                 slotPrefix = "R",
                 onSlotSelected = { index, buttonId -> selectExtendedButton(buttonId, "right", index) },
@@ -509,6 +511,7 @@ fun StatusBarButtonsScreen(
             SettingsSectionDivider(stringResource(R.string.status_bar_buttons_section))
             SlotGroup(
                 title = stringResource(R.string.status_bar_slots_left),
+                linkId = "status_bar.pastierina_left",
                 slots = pastierinaLeftSlots,
                 slotPrefix = "L",
                 onSlotSelected = { index, buttonId -> selectPastierinaButton(buttonId, "left", index) },
@@ -523,6 +526,7 @@ fun StatusBarButtonsScreen(
             )
             SlotGroup(
                 title = stringResource(R.string.status_bar_slots_right),
+                linkId = "status_bar.pastierina_right",
                 slots = pastierinaRightSlots,
                 slotPrefix = "R",
                 onSlotSelected = { index, buttonId -> selectPastierinaButton(buttonId, "right", index) },
@@ -585,6 +589,7 @@ private fun StatusBarLayoutPreview(
 
 @Composable
 private fun SlotGroup(
+    linkId: String,
     title: String,
     slots: List<String>,
     slotPrefix: String,
@@ -592,7 +597,7 @@ private fun SlotGroup(
     onAddSlot: () -> Unit,
     onRemoveSlot: (Int) -> Unit
 ) {
-    Surface(modifier = Modifier.fillMaxWidth()) {
+    Surface(modifier = Modifier.fillMaxWidth().settingRow(linkId)) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

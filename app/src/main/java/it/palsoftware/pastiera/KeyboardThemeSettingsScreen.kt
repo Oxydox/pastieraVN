@@ -96,7 +96,8 @@ fun KeyboardThemeScreen(
     modifier: Modifier = Modifier,
     onBack: () -> Unit,
     initialTarget: SettingsManager.KeyboardThemeTarget? = null,
-    initialTab: KeyboardThemeEditorTab? = null
+    initialTab: KeyboardThemeEditorTab? = null,
+    initialAssignment: Boolean = false
 ) {
     val context = LocalContext.current
     val builtInPresets = remember { keyboardThemePresets() }
@@ -196,13 +197,37 @@ fun KeyboardThemeScreen(
     var deleteThemeRequest by remember { mutableStateOf<String?>(null) }
     var deleteDraftRequest by remember { mutableStateOf<String?>(null) }
     var themePickerRequest by remember { mutableStateOf<KeyboardThemePickerRequest?>(null) }
-    var assignmentScreenTarget by remember { mutableStateOf<SettingsManager.KeyboardThemeTarget?>(null) }
+    var assignmentScreenTarget by remember {
+        mutableStateOf<SettingsManager.KeyboardThemeTarget?>(
+            if (initialAssignment) initialTarget ?: SettingsManager.KeyboardThemeTarget.HARDWARE else null
+        )
+    }
     var overrideEditorRequest by remember { mutableStateOf<KeyboardThemeOverrideEditorRequest?>(null) }
     var hardwareOverrides by remember {
         mutableStateOf(SettingsManager.getKeyboardThemeLayoutOverrides(context, SettingsManager.KeyboardThemeTarget.HARDWARE))
     }
     var softwareOverrides by remember {
         mutableStateOf(SettingsManager.getKeyboardThemeLayoutOverrides(context, SettingsManager.KeyboardThemeTarget.SOFTWARE))
+    }
+
+    val settingHighlightId = LocalSettingHighlightId.current
+    LaunchedEffect(settingHighlightId) {
+        val route = settingHighlightId?.let(SettingLinkRegistry::byId)?.route
+        if (route?.destination == SettingsDestination.Customization &&
+            route.customizationDestination in setOf("keyboard_theme", "keyboard_theme_assignment")
+        ) {
+            // A shared link addresses the saved setting, even if a draft or assignment panel is open.
+            draftEditingGuard.value = false
+            draftEditorName = null
+            val target = route.keyboardThemeTarget
+            if (target != null) {
+                previewPagerState.scrollToPage(if (target == SettingsManager.KeyboardThemeTarget.SOFTWARE) 1 else 0)
+            }
+            route.keyboardThemeTab?.let { customizationTab = if (it == KeyboardThemeEditorTab.Keys) 1 else 0 }
+            assignmentScreenTarget = if (route.customizationDestination == "keyboard_theme_assignment") {
+                target ?: SettingsManager.KeyboardThemeTarget.HARDWARE
+            } else null
+        }
     }
 
     val activePreviewPage = previewPagerState.currentPage
@@ -627,7 +652,8 @@ fun KeyboardThemeScreen(
             }
             if (previewPagerState.currentPage == 1) {
                 KeyboardThemeSliderRow(
-                    label = "Preview max viewport",
+                    label = stringResource(R.string.setting_link_theme_preview_viewport),
+                    linkId = "keyboard_theme.preview_viewport",
                     value = softwarePreviewViewportScale,
                     presetValue = SettingsManager.KEYBOARD_THEME_PREVIEW_VIEWPORT_SCALE_MIN,
                     valueRange = SettingsManager.KEYBOARD_THEME_PREVIEW_VIEWPORT_SCALE_MIN..
@@ -1191,7 +1217,7 @@ private fun KeyboardThemeAssignmentSection(
                 fontWeight = FontWeight.SemiBold
             )
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().settingRow(if (target == SettingsManager.KeyboardThemeTarget.SOFTWARE) "keyboard_theme.software.assignment" else "keyboard_theme.hardware.assignment"),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 KeyboardThemeModeButton(
@@ -1209,11 +1235,13 @@ private fun KeyboardThemeAssignmentSection(
             }
             if (mode == SettingsManager.KEYBOARD_THEME_ASSIGNMENT_MODE_FOLLOW_SYSTEM) {
                 KeyboardThemePickerRow(
+                    linkId = if (target == SettingsManager.KeyboardThemeTarget.SOFTWARE) "keyboard_theme.software.light_theme" else "keyboard_theme.hardware.light_theme",
                     label = stringResource(R.string.keyboard_theme_light_mode_theme),
                     value = lightThemeName,
                     onClick = onPickLightTheme
                 )
                 KeyboardThemePickerRow(
+                    linkId = if (target == SettingsManager.KeyboardThemeTarget.SOFTWARE) "keyboard_theme.software.dark_theme" else "keyboard_theme.hardware.dark_theme",
                     label = stringResource(R.string.keyboard_theme_dark_mode_theme),
                     value = darkThemeName,
                     onClick = onPickDarkTheme
@@ -1224,7 +1252,7 @@ private fun KeyboardThemeAssignmentSection(
 
     Surface(
         modifier = modifier
-            .fillMaxWidth()
+            .fillMaxWidth().settingRow(if (target == SettingsManager.KeyboardThemeTarget.SOFTWARE) "keyboard_theme.software.layout_overrides" else "keyboard_theme.hardware.layout_overrides")
             .padding(top = 8.dp),
         tonalElevation = 1.dp,
         shape = MaterialTheme.shapes.medium
@@ -1270,7 +1298,7 @@ private fun KeyboardThemeAssignmentSummaryRow(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .settingRow(if (target == SettingsManager.KeyboardThemeTarget.SOFTWARE) "keyboard_theme.software.assignment" else "keyboard_theme.hardware.assignment", onClick),
         tonalElevation = 1.dp,
         shape = MaterialTheme.shapes.medium
     ) {
@@ -1370,12 +1398,13 @@ private fun KeyboardThemeModeButton(
 private fun KeyboardThemePickerRow(
     label: String,
     value: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    linkId: String? = null
 ) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .settingRow(linkId, onClick),
         tonalElevation = 2.dp,
         shape = MaterialTheme.shapes.small
     ) {
@@ -1966,7 +1995,7 @@ private fun KeyboardThemeDraftColorsEditor(
                         onColorChanged = { color -> onFieldChanged(item.field, item.onColorChanged(color)) },
                         modifier = Modifier.weight(1f),
                         linkId = if (item.field == DRAFT_LED_INACTIVE) {
-                            SettingLinkIds.KEYBOARD_THEME_LED_COLORS
+                            "keyboard_theme.software.led_colors"
                         } else {
                             null
                         }
@@ -1985,14 +2014,14 @@ private fun KeyboardThemeDraftKeysEditor(
     onFieldChanged: (String, KeyboardThemePreset) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        KeyboardThemeDraftSliderRow(DRAFT_KEY_ROUNDING, stringResource(R.string.keyboard_theme_key_rounding), theme.keyCornerRadiusRatio, 0f..0.35f, populatedFields) { onFieldChanged(DRAFT_KEY_ROUNDING, theme.copy(keyCornerRadiusRatio = it)) }
-        KeyboardThemeDraftSliderRow(DRAFT_CHROME_ROUNDING, stringResource(R.string.keyboard_theme_chrome_rounding), theme.chromeCornerRadiusRatio, 0f..0.35f, populatedFields) { onFieldChanged(DRAFT_CHROME_ROUNDING, theme.copy(chromeCornerRadiusRatio = it)) }
-        KeyboardThemeDraftSliderRow(DRAFT_KEY_HEIGHT, stringResource(R.string.keyboard_theme_key_height), theme.keyHeightScale, 0.72f..1.9f, populatedFields) { onFieldChanged(DRAFT_KEY_HEIGHT, theme.copy(keyHeightScale = it)) }
-        KeyboardThemeDraftSliderRow(DRAFT_NUMBER_ROW_HEIGHT, stringResource(R.string.keyboard_theme_number_row_height), theme.numberRowHeightScale, 0.45f..1.4f, populatedFields) { onFieldChanged(DRAFT_NUMBER_ROW_HEIGHT, theme.copy(numberRowHeightScale = it)) }
-        KeyboardThemeDraftSliderRow(DRAFT_KEY_WIDTH, stringResource(R.string.keyboard_theme_key_width), theme.keyWidthScale, 0.72f..1.12f, populatedFields) { onFieldChanged(DRAFT_KEY_WIDTH, theme.copy(keyWidthScale = it)) }
-        KeyboardThemeDraftSliderRow(DRAFT_ROW_SPACING, stringResource(R.string.keyboard_theme_row_spacing), theme.rowGapScale, 0f..2f, populatedFields) { onFieldChanged(DRAFT_ROW_SPACING, theme.copy(rowGapScale = it)) }
-        KeyboardThemeDraftSliderRow(DRAFT_SUGGESTIONS_HEIGHT, stringResource(R.string.keyboard_theme_suggestions_height), theme.suggestionsHeightScale, 0.65f..1.6f, populatedFields) { onFieldChanged(DRAFT_SUGGESTIONS_HEIGHT, theme.copy(suggestionsHeightScale = it)) }
-        KeyboardThemeDraftSliderRow(DRAFT_VARIATIONS_HEIGHT, stringResource(R.string.keyboard_theme_variations_height), theme.variationsHeightScale, 0.65f..1.6f, populatedFields) { onFieldChanged(DRAFT_VARIATIONS_HEIGHT, theme.copy(variationsHeightScale = it)) }
+        KeyboardThemeDraftSliderRow(DRAFT_KEY_ROUNDING, stringResource(R.string.keyboard_theme_key_rounding), theme.keyCornerRadiusRatio, 0f..0.35f, populatedFields, linkId = "keyboard_theme.software.key_rounding") { onFieldChanged(DRAFT_KEY_ROUNDING, theme.copy(keyCornerRadiusRatio = it)) }
+        KeyboardThemeDraftSliderRow(DRAFT_CHROME_ROUNDING, stringResource(R.string.keyboard_theme_chrome_rounding), theme.chromeCornerRadiusRatio, 0f..0.35f, populatedFields, linkId = "keyboard_theme.software.chrome_rounding") { onFieldChanged(DRAFT_CHROME_ROUNDING, theme.copy(chromeCornerRadiusRatio = it)) }
+        KeyboardThemeDraftSliderRow(DRAFT_KEY_HEIGHT, stringResource(R.string.keyboard_theme_key_height), theme.keyHeightScale, 0.72f..1.9f, populatedFields, linkId = "keyboard_theme.software.key_height") { onFieldChanged(DRAFT_KEY_HEIGHT, theme.copy(keyHeightScale = it)) }
+        KeyboardThemeDraftSliderRow(DRAFT_NUMBER_ROW_HEIGHT, stringResource(R.string.keyboard_theme_number_row_height), theme.numberRowHeightScale, 0.45f..1.4f, populatedFields, linkId = "keyboard_theme.software.number_row_height") { onFieldChanged(DRAFT_NUMBER_ROW_HEIGHT, theme.copy(numberRowHeightScale = it)) }
+        KeyboardThemeDraftSliderRow(DRAFT_KEY_WIDTH, stringResource(R.string.keyboard_theme_key_width), theme.keyWidthScale, 0.72f..1.12f, populatedFields, linkId = "keyboard_theme.software.key_width") { onFieldChanged(DRAFT_KEY_WIDTH, theme.copy(keyWidthScale = it)) }
+        KeyboardThemeDraftSliderRow(DRAFT_ROW_SPACING, stringResource(R.string.keyboard_theme_row_spacing), theme.rowGapScale, 0f..2f, populatedFields, linkId = "keyboard_theme.software.row_spacing") { onFieldChanged(DRAFT_ROW_SPACING, theme.copy(rowGapScale = it)) }
+        KeyboardThemeDraftSliderRow(DRAFT_SUGGESTIONS_HEIGHT, stringResource(R.string.keyboard_theme_suggestions_height), theme.suggestionsHeightScale, 0.65f..1.6f, populatedFields, linkId = "keyboard_theme.software.suggestions_height") { onFieldChanged(DRAFT_SUGGESTIONS_HEIGHT, theme.copy(suggestionsHeightScale = it)) }
+        KeyboardThemeDraftSliderRow(DRAFT_VARIATIONS_HEIGHT, stringResource(R.string.keyboard_theme_variations_height), theme.variationsHeightScale, 0.65f..1.6f, populatedFields, linkId = "keyboard_theme.software.variations_height") { onFieldChanged(DRAFT_VARIATIONS_HEIGHT, theme.copy(variationsHeightScale = it)) }
         KeyboardThemeDraftSwitchRow(DRAFT_SHOW_LEDS, stringResource(R.string.keyboard_theme_show_leds), theme.showLeds, populatedFields, linkId = SettingLinkIds.KEYBOARD_THEME_TOGGLE_SHOW_LEDS) { onFieldChanged(DRAFT_SHOW_LEDS, theme.copy(showLeds = it)) }
         KeyboardThemeDraftSwitchRow(DRAFT_DISTRIBUTE_SPACING, stringResource(R.string.keyboard_theme_distribute_spacing), theme.distributeHorizontalSpacing, populatedFields, linkId = SettingLinkIds.KEYBOARD_THEME_TOGGLE_DISTRIBUTE_SPACING) { onFieldChanged(DRAFT_DISTRIBUTE_SPACING, theme.copy(distributeHorizontalSpacing = it)) }
         KeyboardThemeDraftSwitchRow(DRAFT_ORTHOLINEAR, stringResource(R.string.keyboard_theme_ortholinear), theme.ortholinear, populatedFields, linkId = SettingLinkIds.KEYBOARD_THEME_TOGGLE_ORTHOLINEAR) { onFieldChanged(DRAFT_ORTHOLINEAR, theme.copy(ortholinear = it)) }
@@ -2054,12 +2083,13 @@ private fun KeyboardThemeDraftSliderRow(
     value: Float,
     valueRange: ClosedFloatingPointRange<Float>,
     populatedFields: Set<String>,
+    linkId: String? = null,
     onValueChanged: (Float) -> Unit
 ) {
     if (field in populatedFields) {
-        KeyboardThemeSliderRow(label, value, value, valueRange, onValueChanged = onValueChanged)
+        KeyboardThemeSliderRow(label, value, value, valueRange, linkId = linkId, onValueChanged = onValueChanged)
     } else {
-        KeyboardThemeRequiredRow(label = label) {
+        KeyboardThemeRequiredRow(label = label, linkId = linkId) {
             TextButton(onClick = { onValueChanged(value) }) {
                 Text(stringResource(R.string.keyboard_theme_set_value))
             }
@@ -2212,7 +2242,11 @@ private fun KeyboardThemeColorsEditor(
                 color = theme.ledInactive,
                 presetColor = preset.ledInactive,
                 onColorChanged = { onThemeChanged(theme.copy(ledInactive = it)) },
-                linkId = SettingLinkIds.KEYBOARD_THEME_LED_COLORS
+                linkId = if (LocalSettingHighlightId.current == SettingLinkIds.KEYBOARD_THEME_LED_COLORS) {
+                    SettingLinkIds.KEYBOARD_THEME_LED_COLORS
+                } else {
+                    if (isSoftware) "keyboard_theme.software.led_colors" else "keyboard_theme.hardware.led_colors"
+                }
             )
         )
         add(
@@ -2278,7 +2312,8 @@ private fun KeyboardThemeKeysEditor(
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (isSoftware) {
             KeyboardThemeSliderRow(
-                label = "Key rounding",
+                label = stringResource(R.string.keyboard_theme_key_rounding),
+                linkId = "keyboard_theme.software.key_rounding",
                 value = theme.keyCornerRadiusRatio,
                 presetValue = preset.keyCornerRadiusRatio,
                 valueRange = 0f..0.35f,
@@ -2286,21 +2321,24 @@ private fun KeyboardThemeKeysEditor(
             )
         }
         KeyboardThemeSliderRow(
-            label = "Suggestions / variations rounding",
+            label = stringResource(R.string.keyboard_theme_chrome_rounding),
+            linkId = if (isSoftware) "keyboard_theme.software.chrome_rounding" else "keyboard_theme.hardware.chrome_rounding",
             value = theme.chromeCornerRadiusRatio,
             presetValue = preset.chromeCornerRadiusRatio,
             valueRange = 0f..0.35f,
             onValueChanged = { onThemeChanged(theme.copy(chromeCornerRadiusRatio = it)) }
         )
         KeyboardThemeSliderRow(
-            label = "Suggestions height",
+            label = stringResource(R.string.keyboard_theme_suggestions_height),
+            linkId = if (isSoftware) "keyboard_theme.software.suggestions_height" else "keyboard_theme.hardware.suggestions_height",
             value = theme.suggestionsHeightScale,
             presetValue = preset.suggestionsHeightScale,
             valueRange = 0.65f..1.6f,
             onValueChanged = { onThemeChanged(theme.copy(suggestionsHeightScale = it)) }
         )
         KeyboardThemeSliderRow(
-            label = "Variations height",
+            label = stringResource(R.string.keyboard_theme_variations_height),
+            linkId = if (isSoftware) "keyboard_theme.software.variations_height" else "keyboard_theme.hardware.variations_height",
             value = theme.variationsHeightScale,
             presetValue = preset.variationsHeightScale,
             valueRange = 0.65f..1.6f,
@@ -2315,28 +2353,32 @@ private fun KeyboardThemeKeysEditor(
                 linkId = SettingLinkIds.KEYBOARD_THEME_TOGGLE_SHOW_LEDS
             )
             KeyboardThemeSliderRow(
-                label = "Key height",
+                label = stringResource(R.string.keyboard_theme_key_height),
+                linkId = "keyboard_theme.software.key_height",
                 value = theme.keyHeightScale,
                 presetValue = preset.keyHeightScale,
                 valueRange = 0.72f..1.9f,
                 onValueChanged = { onThemeChanged(theme.copy(keyHeightScale = it)) }
             )
             KeyboardThemeSliderRow(
-                label = "Number row height",
+                label = stringResource(R.string.keyboard_theme_number_row_height),
+                linkId = "keyboard_theme.software.number_row_height",
                 value = theme.numberRowHeightScale,
                 presetValue = preset.numberRowHeightScale,
                 valueRange = 0.45f..1.4f,
                 onValueChanged = { onThemeChanged(theme.copy(numberRowHeightScale = it)) }
             )
             KeyboardThemeSliderRow(
-                label = "Key width",
+                label = stringResource(R.string.keyboard_theme_key_width),
+                linkId = "keyboard_theme.software.key_width",
                 value = theme.keyWidthScale,
                 presetValue = preset.keyWidthScale,
                 valueRange = 0.72f..1.12f,
                 onValueChanged = { onThemeChanged(theme.copy(keyWidthScale = it)) }
             )
             KeyboardThemeSliderRow(
-                label = "Row spacing",
+                label = stringResource(R.string.keyboard_theme_row_spacing),
+                linkId = "keyboard_theme.software.row_spacing",
                 value = theme.rowGapScale,
                 presetValue = preset.rowGapScale,
                 valueRange = 0f..2f,
@@ -2541,10 +2583,11 @@ private fun KeyboardThemeSliderRow(
     valueRange: ClosedFloatingPointRange<Float>,
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
+    linkId: String? = null,
     onValueChanged: (Float) -> Unit
 ) {
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().settingRow(linkId),
         tonalElevation = 1.dp,
         shape = MaterialTheme.shapes.medium
     ) {

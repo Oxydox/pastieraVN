@@ -329,6 +329,7 @@ fun AccessibilitySettingsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(116.dp)
+                    .settingRow("accessibility.bounce_keys_delay")
             ) {
                 Column(
                     modifier = Modifier

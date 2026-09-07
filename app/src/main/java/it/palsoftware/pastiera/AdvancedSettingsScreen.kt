@@ -811,6 +811,10 @@ private enum class AdvancedNavigationDirection {
 }
 
 private val TRACKPAD_SETTING_LINK_IDS = setOf(
+    "trackpad.add_word",
+    "trackpad.add_word_full_width",
+    "trackpad.swipe_to_delete",
+    "trackpad.swipe_to_delete_provider",
     SettingLinkIds.TRACKPAD_GESTURES_ENABLED,
     SettingLinkIds.TRACKPAD_PROVIDER,
     SettingLinkIds.TRACKPAD_SHIZUKU_DEVICE,

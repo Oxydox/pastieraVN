@@ -84,6 +84,10 @@ fun TrackpadGestureSettingsScreen(
         when (highlightedSettingId) {
             SettingLinkIds.TRACKPAD_SUGGESTION_SWIPE_THRESHOLD,
             SettingLinkIds.TRACKPAD_DELETE_SWIPE_THRESHOLD -> showSensitivitySettings = true
+            "trackpad.add_word",
+            "trackpad.add_word_full_width",
+            "trackpad.swipe_to_delete",
+            "trackpad.swipe_to_delete_provider",
             SettingLinkIds.TRACKPAD_GESTURES_ENABLED,
             SettingLinkIds.TRACKPAD_PROVIDER,
             SettingLinkIds.TRACKPAD_SHIZUKU_DEVICE,
@@ -229,6 +233,7 @@ fun TrackpadGestureSettingsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(64.dp)
+                    .settingRow("trackpad.add_word")
             ) {
                 Row(
                     modifier = Modifier
@@ -267,6 +272,7 @@ fun TrackpadGestureSettingsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(64.dp)
+                    .settingRow("trackpad.add_word_full_width")
             ) {
                 Row(
                     modifier = Modifier
@@ -491,6 +497,7 @@ fun TrackpadGestureSettingsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 4.dp)
+                    .settingRow("trackpad.swipe_to_delete_provider")
             ) {
                 OutlinedTextField(
                     value = swipeToDeleteProviderOptions.firstOrNull { it.first == swipeToDeleteProvider }?.second ?: swipeToDeleteProvider,
@@ -535,6 +542,7 @@ fun TrackpadGestureSettingsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(72.dp)
+                    .settingRow("trackpad.swipe_to_delete")
             ) {
                 Row(
                     modifier = Modifier

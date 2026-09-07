@@ -137,6 +137,11 @@ fun SymCustomizationScreen(
     var editingLayerPage by remember {
         mutableStateOf(initialPage.takeIf { it == 1 || it == 2 })
     }
+    val settingHighlight = LocalSettingHighlightId.current
+    LaunchedEffect(settingHighlight) {
+        if (settingHighlight?.startsWith("sym.") == true) editingLayerPage = null
+    }
+
     
     // Helper to load mappings from JSON
     fun loadMappingsFromJson(filePath: String): Map<Int, String> {
@@ -316,7 +321,7 @@ fun SymCustomizationScreen(
         ) {
         if (editingLayerPage == null) {
         Surface(
-            modifier = Modifier
+            modifier = Modifier.settingRow("sym.pages")
                 .fillMaxWidth()
         ) {
             Column(
@@ -516,7 +521,7 @@ fun SymCustomizationScreen(
 
         // Auto-Close SYM Layout option (in alto)
         Surface(
-            modifier = Modifier
+            modifier = Modifier.settingRow("sym.auto_close")
                 .fillMaxWidth()
                 .height(64.dp)
         ) {
@@ -558,7 +563,7 @@ fun SymCustomizationScreen(
         }
 
         Surface(
-            modifier = Modifier
+            modifier = Modifier.settingRow("sym.auto_close_touch")
                 .fillMaxWidth()
                 .height(64.dp)
         ) {
@@ -672,7 +677,7 @@ fun SymCustomizationScreen(
         if (editingLayerPage == null) {
 
         Surface(
-            modifier = Modifier
+            modifier = Modifier.settingRow("sym.emoji_height")
                 .fillMaxWidth()
                 .height(64.dp)
         ) {

@@ -168,7 +168,7 @@ fun LauncherShortcutsScreen(
                     text = stringResource(R.string.launcher_shortcuts_screen_title),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(start = 8.dp)
+                    modifier = Modifier.padding(start = 8.dp).settingRow("quick_launcher.assignments")
                 )
             }
         }

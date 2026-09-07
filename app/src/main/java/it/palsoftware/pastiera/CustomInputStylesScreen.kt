@@ -572,7 +572,7 @@ internal fun AppLanguageSelectorCard() {
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().settingRow(SettingLinkIds.MAIN_APP_LANGUAGE)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),

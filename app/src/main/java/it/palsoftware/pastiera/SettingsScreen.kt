@@ -93,6 +93,14 @@ internal data class SettingsStackEntry(
     val keyboardsDevicesDestination: KeyboardsDevicesDestination = KeyboardsDevicesDestination.Main
 )
 
+internal fun SettingRoute.toSettingsStackEntry() = SettingsStackEntry(
+    destination = destination,
+    customizationDestination = customizationDestination,
+    keyboardThemeTarget = keyboardThemeTarget?.name,
+    keyboardThemeTab = keyboardThemeTab?.name,
+    keyboardsDevicesDestination = keyboardsDevicesDestination
+)
+
 private const val SETTINGS_STACK_SAVER_VERSION = "settings-stack-v3"
 private const val SETTINGS_STACK_SAVER_VERSION_V2 = "settings-stack-v2"
 
@@ -194,14 +202,7 @@ fun SettingsScreen(
                 if (linkEntry.route.destination != SettingsDestination.Main) {
                     add(SettingsStackEntry(SettingsDestination.Main))
                 }
-                add(
-                    SettingsStackEntry(
-                        destination = linkEntry.route.destination,
-                        customizationDestination = linkEntry.route.customizationDestination,
-                        keyboardThemeTarget = linkEntry.route.keyboardThemeTarget?.name,
-                        keyboardThemeTab = linkEntry.route.keyboardThemeTab?.name
-                    )
-                )
+                add(linkEntry.route.toSettingsStackEntry())
             } else when (initialDestination) {
                 SettingsActivity.DESTINATION_CUSTOMIZATION -> {
                     if (initialCustomizationDestination == null) {
@@ -278,16 +279,23 @@ fun SettingsScreen(
      * its row to flash and scroll into view. Never changes any value.
      */
     fun openSettingEntry(entry: SettingEntry) {
+        linkSheetEntry = null
         val visibleEntry = SettingLinkRegistry.visibleTarget(context, entry)
         val route = visibleEntry.route
-        if (route.destination == SettingsDestination.Customization) {
-            openCustomization(
-                destination = route.customizationDestination,
-                keyboardThemeTarget = route.keyboardThemeTarget?.name,
-                keyboardThemeTab = route.keyboardThemeTab?.name
-            )
-        } else if (currentDestination != route.destination) {
-            navigateTo(route.destination)
+        if (route.symCustomization) {
+            context.startActivity(Intent(context, SymCustomizationActivity::class.java).apply {
+                putExtra(SymCustomizationActivity.EXTRA_SETTING_ID, visibleEntry.id)
+            })
+            return
+        }
+        val target = route.toSettingsStackEntry()
+        if (currentEntry != target) {
+            navigationDirection = NavigationDirection.Push
+            if (currentDestination == target.destination) {
+                navigationStack[navigationStack.lastIndex] = target
+            } else {
+                navigationStack.add(target)
+            }
         }
         highlightSettingId = visibleEntry.id
     }
@@ -515,7 +523,6 @@ fun SettingsScreen(
         }
     }
     }
-
     }
 
     // Share/copy sheet for the settings entry currently being long-pressed

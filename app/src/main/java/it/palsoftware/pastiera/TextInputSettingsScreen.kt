@@ -39,6 +39,12 @@ fun TextInputSettingsScreen(
 ) {
     val context = LocalContext.current
     var showTextExpansion by remember { mutableStateOf(false) }
+    val linkedSetting = LocalSettingHighlightId.current
+    LaunchedEffect(linkedSetting) {
+        if (linkedSetting != null) {
+            showTextExpansion = linkedSetting.startsWith("text_expansion.")
+        }
+    }
     
     var autoCapitalizeFirstLetter by remember {
         mutableStateOf(SettingsManager.getAutoCapitalizeFirstLetter(context))
