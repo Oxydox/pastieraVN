@@ -588,7 +588,7 @@ private fun SettingsMainScreen(
 
             if (shouldUseGithubUpdateChecks(context)) {
                 SettingsCategoryRow(
-                    icon = Icons.Filled.Code,
+                    icon = ImageVector.vectorResource(R.drawable.plektra_open_monochrome_24),
                     title = if (checkingForUpdates) {
                         stringResource(R.string.settings_update_checking)
                     } else {
