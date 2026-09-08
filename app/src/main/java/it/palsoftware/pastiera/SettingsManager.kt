@@ -101,6 +101,8 @@ object SettingsManager {
     private const val KEY_KEYBOARD_LAYOUT_LIST = "keyboard_layout_list" // JSON array of layout ids for cycling
     private const val KEY_ALT_SHIFT_LAYOUT_SWITCH = "alt_shift_layout_switch" // Enable Alt+Shift shortcut for layout cycling
     private const val KEY_ALT_SHIFT_DEFAULT_INITIALIZED = "alt_shift_default_initialized"
+    private const val KEY_TITAN2_ELITE_ROUNDED_CORNERS_ENFORCED_V1 =
+        "titan2_elite_rounded_corners_enforced_v1"
     private const val KEY_ALT_ENTER_LAYOUT_SWITCH = "alt_enter_layout_switch" // Enable Alt+Enter shortcut for layout cycling
     private const val KEY_CTRL_SPACE_LAYOUT_SWITCH = "ctrl_space_layout_switch" // Enable Ctrl+Space shortcut for layout cycling
     private const val KEY_PHYSICAL_KEYBOARD_PROFILE_OVERRIDE = "physical_keyboard_profile_override" // auto | key2 | Q25 | titan | titan2 | titan2elite_qwerty | mp01 | clicks_razr | clicks_pixel | clicks_power
@@ -1465,6 +1467,22 @@ object SettingsManager {
         getPreferences(context).edit()
             .putBoolean(KEY_TITAN2_ELITE_ROUNDED_CORNER_INSETS, enabled)
             .apply()
+    }
+
+    /**
+     * Enables the calibrated rounded-corner layout once for Titan 2 Elite users receiving this
+     * migration. Later user changes remain authoritative because the marker prevents reapplying it.
+     */
+    fun enforceTitan2EliteRoundedCornersOnce(context: Context) {
+        val prefs = getPreferences(context)
+        if (prefs.getBoolean(KEY_TITAN2_ELITE_ROUNDED_CORNERS_ENFORCED_V1, false)) return
+
+        prefs.edit().apply {
+            if (DeviceSpecific.isTitan2EliteDevice()) {
+                putBoolean(KEY_TITAN2_ELITE_ROUNDED_CORNER_INSETS, true)
+            }
+            putBoolean(KEY_TITAN2_ELITE_ROUNDED_CORNERS_ENFORCED_V1, true)
+        }.apply()
     }
 
     /**

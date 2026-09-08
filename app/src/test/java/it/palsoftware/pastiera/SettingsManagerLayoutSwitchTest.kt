@@ -116,6 +116,38 @@ class SettingsManagerLayoutSwitchTest {
     }
 
     @Test
+    fun titan2EliteRoundedCorners_updateMigrationEnablesOnce_thenRespectsUserChoice() {
+        val context = RuntimeEnvironment.getApplication()
+        DeviceSpecific.setBuildFingerprintForTests(
+            brand = "unihertz",
+            manufacturer = "unihertz",
+            model = "Titan 2 Elite",
+            device = "titan2",
+            product = "titan2",
+            board = "G72BoardV1"
+        )
+        SettingsManager.setTitan2EliteRoundedCornerInsetsEnabled(context, false)
+
+        SettingsManager.enforceTitan2EliteRoundedCornersOnce(context)
+
+        assertTrue(SettingsManager.getTitan2EliteRoundedCornerInsetsEnabled(context))
+
+        SettingsManager.setTitan2EliteRoundedCornerInsetsEnabled(context, false)
+        SettingsManager.enforceTitan2EliteRoundedCornersOnce(context)
+
+        assertFalse(SettingsManager.getTitan2EliteRoundedCornerInsetsEnabled(context))
+    }
+
+    @Test
+    fun titan2EliteRoundedCorners_updateMigrationDoesNotEnableOnOtherDevices() {
+        val context = RuntimeEnvironment.getApplication()
+
+        SettingsManager.enforceTitan2EliteRoundedCornersOnce(context)
+
+        assertFalse(SettingsManager.getTitan2EliteRoundedCornerInsetsEnabled(context))
+    }
+
+    @Test
     fun modifierIndicators_defaultToBottomStripAndPersistMultipleTargets() {
         val context = RuntimeEnvironment.getApplication()
 

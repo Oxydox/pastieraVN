@@ -253,6 +253,7 @@ class BackupPreferenceContractIntegrationTest {
             "alt_shift_default_initialized",
             "current_sym_page",
             "legacy_german_qwertz_default_migrated",
+            "titan2_elite_rounded_corners_enforced_v1",
             "last_seen_whats_new_version",
             "nav_mode_default_mappings_version",
             "quick_launcher_default_assigned",
