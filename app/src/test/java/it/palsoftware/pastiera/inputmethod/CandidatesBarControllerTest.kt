@@ -76,6 +76,9 @@ class CandidatesBarControllerTest {
         
         // Dispatch visibility to inputView
         inputView.dispatchWindowVisibilityChanged(View.VISIBLE)
+        
+        // Ensure the window is visible at the system level
+        activity.window.setDecorFitsSystemWindows(true)
     
         assertTrue(controller.isInputViewActuallyRendered())
     }
