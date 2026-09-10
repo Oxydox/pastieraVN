@@ -53,17 +53,19 @@ class CandidatesBarControllerTest {
 
     @Test
     fun attachedAndLaidOutInputViewIsReportedAsRendered() {
-        val activity = Robolectric.buildActivity(Activity::class.java).setup().visible().get()
+        val activityController = Robolectric.buildActivity(Activity::class.java)
+        val activity = activityController.create().get()
         val controller = CandidatesBarController(activity)
         val inputView = controller.getInputView()
         activity.setContentView(inputView)
+        activityController.start().postCreate(null).resume().visible()
         val decorView = activity.window.decorView
         decorView.measure(
             View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY),
             View.MeasureSpec.makeMeasureSpec(2400, View.MeasureSpec.EXACTLY)
         )
         decorView.layout(0, 0, 1080, 2400)
-
+    
         assertTrue(controller.isInputViewActuallyRendered())
     }
 
