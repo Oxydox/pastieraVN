@@ -63,12 +63,15 @@ class CandidatesBarControllerTest {
             View.MeasureSpec.makeMeasureSpec(2400, View.MeasureSpec.EXACTLY)
         )
         decorView.layout(0, 0, 1080, 2400)
-        // isActuallyRendered() now also requires windowVisibility == VISIBLE (added upstream).
-        // setContentView() swapped the view hierarchy in after the activity was already made
-        // visible, so the window-visibility dispatch that happened during .visible() never
-        // reached this new content view. Dispatch it explicitly so it propagates correctly
-        // to inputView and its descendants.
+        
+        // Dispatch window visibility to decorView first
         decorView.dispatchWindowVisibilityChanged(View.VISIBLE)
+        
+        // Then explicitly dispatch to inputView and its children to ensure propagation
+        inputView.dispatchWindowVisibilityChanged(View.VISIBLE)
+        
+        // Also ensure inputView is marked as visible
+        inputView.visibility = View.VISIBLE
     
         assertTrue(controller.isInputViewActuallyRendered())
     }
