@@ -101,6 +101,8 @@ object SettingsManager {
     private const val KEY_KEYBOARD_LAYOUT_LIST = "keyboard_layout_list" // JSON array of layout ids for cycling
     private const val KEY_ALT_SHIFT_LAYOUT_SWITCH = "alt_shift_layout_switch" // Enable Alt+Shift shortcut for layout cycling
     private const val KEY_ALT_SHIFT_DEFAULT_INITIALIZED = "alt_shift_default_initialized"
+    private const val KEY_TITAN2_ELITE_ROUNDED_CORNERS_ENFORCED_V1 =
+        "titan2_elite_rounded_corners_enforced_v1"
     private const val KEY_ALT_ENTER_LAYOUT_SWITCH = "alt_enter_layout_switch" // Enable Alt+Enter shortcut for layout cycling
     private const val KEY_CTRL_SPACE_LAYOUT_SWITCH = "ctrl_space_layout_switch" // Enable Ctrl+Space shortcut for layout cycling
     private const val KEY_PHYSICAL_KEYBOARD_PROFILE_OVERRIDE = "physical_keyboard_profile_override" // auto | key2 | Q25 | titan | titan2 | titan2elite_qwerty | mp01 | clicks_razr | clicks_pixel | clicks_power
@@ -175,6 +177,8 @@ object SettingsManager {
     private const val KEY_SOFTWARE_KEYBOARD_LONG_PRESS_LAYER_POPUP_ENABLED = "software_keyboard_long_press_layer_popup_enabled"
     private const val KEY_SOFTWARE_KEYBOARD_LONG_PRESS_LAYER_POPUP_BELOW_KEY = "software_keyboard_long_press_layer_popup_below_key"
     private const val KEY_TITAN2_LAYOUT_ENABLED = "titan2_layout_enabled" // Align OSK with Titan 2 physical layout
+    const val KEY_TITAN2_ELITE_MAX_ICON_SHRINK = "titan2_elite_max_icon_shrink"
+    const val KEY_TITAN2_ELITE_TOP_CORNER_MULTIPLIER = "titan2_elite_top_corner_multiplier"
     const val KEY_TITAN2_ELITE_ROUNDED_CORNER_INSETS = "titan2_elite_rounded_corner_insets"
     private const val KEY_ACCESSIBILITY_LIVE_ANNOUNCEMENTS_ENABLED = "accessibility_live_announcements_enabled" // Whether status bar accessibility live announcements are enabled
     private const val KEY_ACCESSIBILITY_READ_SECOND_ROW_ENABLED = "accessibility_read_second_row_enabled" // Whether TalkBack should read quick settings/variations row
@@ -388,6 +392,7 @@ object SettingsManager {
     private const val KEY_EXPERIMENTAL_SUGGESTIONS_ENABLED = "experimental_suggestions_enabled"
     private const val KEY_SUGGESTION_DEBUG_LOGGING = "suggestion_debug_logging"
     private const val KEY_IME_OVERLAY_DEBUG_LOGGING = "ime_overlay_debug_logging"
+    private const val KEY_EXPERIMENTAL_CANDIDATES_VIEW_ENABLED = "experimental_candidates_view_enabled"
     private const val KEY_USE_KEYBOARD_PROXIMITY = "use_keyboard_proximity"
     private const val KEY_USE_EDIT_TYPE_RANKING = "use_edit_type_ranking"
 
@@ -1440,10 +1445,44 @@ object SettingsManager {
             DeviceSpecific.isTitan2EliteDevice()
         )
 
+    fun getTitan2EliteTopCornerMultiplier(context: Context): Int =
+        getPreferences(context).getInt(KEY_TITAN2_ELITE_TOP_CORNER_MULTIPLIER, 2).let {
+            when (it) { 1, 4, 6 -> it; else -> 2 }
+        }
+
+    fun setTitan2EliteTopCornerMultiplier(context: Context, multiplier: Int) {
+        getPreferences(context).edit()
+            .putInt(KEY_TITAN2_ELITE_TOP_CORNER_MULTIPLIER, when (multiplier) { 1, 4, 6 -> multiplier; else -> 2 })
+            .apply()
+    }
+
+    fun getTitan2EliteMaxIconShrink(context: Context): Int =
+        getPreferences(context).getInt(KEY_TITAN2_ELITE_MAX_ICON_SHRINK, 90).coerceIn(0, 90)
+
+    fun setTitan2EliteMaxIconShrink(context: Context, percent: Int) {
+        getPreferences(context).edit().putInt(KEY_TITAN2_ELITE_MAX_ICON_SHRINK, percent.coerceIn(0, 90)).apply()
+    }
+
     fun setTitan2EliteRoundedCornerInsetsEnabled(context: Context, enabled: Boolean) {
         getPreferences(context).edit()
             .putBoolean(KEY_TITAN2_ELITE_ROUNDED_CORNER_INSETS, enabled)
             .apply()
+    }
+
+    /**
+     * Enables the calibrated rounded-corner layout once for Titan 2 Elite users receiving this
+     * migration. Later user changes remain authoritative because the marker prevents reapplying it.
+     */
+    fun enforceTitan2EliteRoundedCornersOnce(context: Context) {
+        val prefs = getPreferences(context)
+        if (prefs.getBoolean(KEY_TITAN2_ELITE_ROUNDED_CORNERS_ENFORCED_V1, false)) return
+
+        prefs.edit().apply {
+            if (DeviceSpecific.isTitan2EliteDevice()) {
+                putBoolean(KEY_TITAN2_ELITE_ROUNDED_CORNER_INSETS, true)
+            }
+            putBoolean(KEY_TITAN2_ELITE_ROUNDED_CORNERS_ENFORCED_V1, true)
+        }.apply()
     }
 
     /**
@@ -2979,6 +3018,17 @@ object SettingsManager {
     fun setExperimentalSuggestionsEnabled(context: Context, enabled: Boolean) {
         getPreferences(context).edit()
             .putBoolean(KEY_EXPERIMENTAL_SUGGESTIONS_ENABLED, enabled)
+            .apply()
+    }
+
+    /** Opt-in candidates lifecycle for the hardware keyboard; existing installs keep the input view. */
+    fun getExperimentalCandidatesViewEnabled(context: Context): Boolean {
+        return getPreferences(context).getBoolean(KEY_EXPERIMENTAL_CANDIDATES_VIEW_ENABLED, false)
+    }
+
+    fun setExperimentalCandidatesViewEnabled(context: Context, enabled: Boolean) {
+        getPreferences(context).edit()
+            .putBoolean(KEY_EXPERIMENTAL_CANDIDATES_VIEW_ENABLED, enabled)
             .apply()
     }
 

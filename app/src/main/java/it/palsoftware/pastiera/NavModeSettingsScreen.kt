@@ -41,7 +41,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.ui.window.DialogProperties
-import androidx.activity.compose.BackHandler
 import it.palsoftware.pastiera.R
 import it.palsoftware.pastiera.commands.CommandRegistry
 import it.palsoftware.pastiera.commands.CommandSurface
@@ -60,7 +59,7 @@ fun NavModeSettingsScreen(
     initialKeyCode: Int? = null
 ) {
     val context = LocalContext.current
-    
+
     // Load nav mode enabled state
     var navModeEnabled by remember {
         mutableStateOf(SettingsManager.getNavModeEnabled(context))
@@ -73,15 +72,15 @@ fun NavModeSettingsScreen(
     }
     var showNavModeGuide by remember { mutableStateOf(false) }
     var showLayoutAwareCtrlInfo by remember { mutableStateOf(false) }
-    
+
     // Load current mappings (all alphabetic keys)
     var keyMappings by remember {
         mutableStateOf(loadAllKeyMappings(context))
     }
-    
+
     // Dialog state for key configuration
     var selectedKeyCode by remember(initialKeyCode) { mutableStateOf(initialKeyCode) }
-    
+
     // Load default mappings for comparison
     val defaultMappings = remember {
         loadAllKeyMappings(context, useDefaults = true)
@@ -89,10 +88,9 @@ fun NavModeSettingsScreen(
     val layoutHints = remember(keyMappings) {
         loadLayoutHints(context)
     }
-    
+
     // Handle system back button
-    BackHandler { onBack() }
-    
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -161,10 +159,10 @@ fun NavModeSettingsScreen(
                 }
             }
         }
-        
+
         // Enable/Disable toggle
         Surface(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().settingRow("nav_mode.enabled")
         ) {
             Row(
                 modifier = Modifier
@@ -199,7 +197,7 @@ fun NavModeSettingsScreen(
             val layoutAwareCtrlShortcutsAvailable = !navModeCtrlHoldEnabled
 
             Surface(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().settingRow("nav_mode.ctrl_hold")
             ) {
                 Row(
                     modifier = Modifier
@@ -231,7 +229,7 @@ fun NavModeSettingsScreen(
             }
 
             Surface(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().settingRow("nav_mode.layout_aware_ctrl_shortcuts")
             ) {
                 Row(
                     modifier = Modifier
@@ -328,8 +326,8 @@ fun NavModeSettingsScreen(
                 }
             )
         }
-        
-        
+
+
         // Keyboard visualization
         if (navModeEnabled) {
             val keyboardRows = listOf(
@@ -350,9 +348,9 @@ fun NavModeSettingsScreen(
                     KeyEvent.KEYCODE_M
                 )
             )
-            
+
             val spacing = 2.dp
-            
+
             BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -369,7 +367,7 @@ fun NavModeSettingsScreen(
                 val finalSizePx = min(desiredSizePx, exactSizePx)
                 val keySize = with(density) { finalSizePx.toDp() }
                 val keyHeight = keySize * 1.25f
-                
+
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(spacing),
@@ -414,7 +412,7 @@ fun NavModeSettingsScreen(
             }
         }
     }
-    
+
     // Key configuration dialog
     selectedKeyCode?.let { keyCode ->
         KeyMappingDialog(
@@ -533,7 +531,7 @@ private fun KeyButton(
         mappingIcon = null
         mappingIconDesc = null
     }
-    
+
     Surface(
         modifier = modifier
             .clip(RoundedCornerShape(8.dp))
@@ -623,7 +621,7 @@ private fun KeyMappingDialog(
     val defaultLabel = defaultMapping?.let { getMappingLabel(it) }
     val dialogMaxHeight = LocalConfiguration.current.screenHeightDp.dp * 0.9f
     val gridMaxHeight = dialogMaxHeight * 0.6f
-    
+
     BasicAlertDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -651,7 +649,7 @@ private fun KeyMappingDialog(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
-                
+
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -726,7 +724,7 @@ private fun KeyMappingDialog(
                             }
                         }
                     }
-                    
+
                     // Value selection based on type
                     if (selectedType == "keycode") {
                         val keycodes = listOf(
@@ -798,7 +796,7 @@ private fun KeyMappingDialog(
                         }
                     }
                 }
-                
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -966,7 +964,7 @@ private fun loadAllKeyMappings(context: Context, useDefaults: Boolean = false): 
         KeyEvent.KEYCODE_X, KeyEvent.KEYCODE_C, KeyEvent.KEYCODE_V, KeyEvent.KEYCODE_B,
         KeyEvent.KEYCODE_N, KeyEvent.KEYCODE_M
     )
-    
+
     val loadedMappings = try {
         val assets = context.assets
         if (useDefaults) {
@@ -977,7 +975,7 @@ private fun loadAllKeyMappings(context: Context, useDefaults: Boolean = false): 
     } catch (e: Exception) {
         emptyMap()
     }
-    
+
     // Return all keys with their mappings (or null if no mapping)
     return allAlphabeticKeys.associateWith { keyCode ->
         loadedMappings[keyCode] ?: KeyMappingLoader.CtrlMapping("none", "")

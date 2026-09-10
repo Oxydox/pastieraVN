@@ -14,6 +14,7 @@ class PastieraApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         SettingsManager.initializeAltShiftLayoutSwitchDefault(this)
+        SettingsManager.enforceTitan2EliteRoundedCornersOnce(this)
         AppPackageChangeMonitor.register(this)
         ClicksPowerKeyboardController.initialize(this)
         publishSoftwareKeyboardModeShortcut()
