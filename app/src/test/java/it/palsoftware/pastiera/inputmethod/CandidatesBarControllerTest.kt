@@ -53,22 +53,26 @@ class CandidatesBarControllerTest {
 
     @Test
     fun attachedAndLaidOutInputViewIsReportedAsRendered() {
-        val activityController = Robolectric.buildActivity(Activity::class.java)
-        val activity = activityController.create().get()
+        val activity = Robolectric.buildActivity(Activity::class.java).setup().visible().get()
         val controller = CandidatesBarController(activity)
         val inputView = controller.getInputView()
         activity.setContentView(inputView)
-        activityController.start().postCreate(null).resume().visible()
         val decorView = activity.window.decorView
         decorView.measure(
             View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY),
             View.MeasureSpec.makeMeasureSpec(2400, View.MeasureSpec.EXACTLY)
         )
         decorView.layout(0, 0, 1080, 2400)
+        // isActuallyRendered() now also requires windowVisibility == VISIBLE (added upstream).
+        // setContentView() swapped the view hierarchy in after the activity was already made
+        // visible, so the window-visibility dispatch that happened during .visible() never
+        // reached this new content view. Dispatch it explicitly so it propagates correctly
+        // to inputView and its descendants.
+        decorView.dispatchWindowVisibilityChanged(View.VISIBLE)
     
         assertTrue(controller.isInputViewActuallyRendered())
     }
-
+    
     @Test
     fun candidatesViewIsNotCollapsedByConfiguredSoftwareKeyboardMode() {
         SettingsManager.setSoftwareKeyboardMode(
