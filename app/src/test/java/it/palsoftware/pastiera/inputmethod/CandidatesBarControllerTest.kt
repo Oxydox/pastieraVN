@@ -64,14 +64,18 @@ class CandidatesBarControllerTest {
         )
         decorView.layout(0, 0, 1080, 2400)
         
-        // Dispatch window visibility to decorView first
+        // Dispatch window visibility to decorView
         decorView.dispatchWindowVisibilityChanged(View.VISIBLE)
         
-        // Then explicitly dispatch to inputView and its children to ensure propagation
-        inputView.dispatchWindowVisibilityChanged(View.VISIBLE)
+        // Measure and layout the inputView itself
+        inputView.measure(
+            View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(2400, View.MeasureSpec.UNSPECIFIED)
+        )
+        inputView.layout(0, 0, inputView.measuredWidth, inputView.measuredHeight)
         
-        // Also ensure inputView is marked as visible
-        inputView.visibility = View.VISIBLE
+        // Dispatch visibility to inputView
+        inputView.dispatchWindowVisibilityChanged(View.VISIBLE)
     
         assertTrue(controller.isInputViewActuallyRendered())
     }
