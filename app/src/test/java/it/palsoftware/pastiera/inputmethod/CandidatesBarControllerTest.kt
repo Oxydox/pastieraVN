@@ -87,7 +87,16 @@ class CandidatesBarControllerTest {
             depth++
         }
 
-        assertTrue(controller.isInputViewActuallyRendered())
+        val r2 = android.graphics.Rect()
+        val diag = "attached=" + inputView.isAttachedToWindow +
+            " winVis=" + inputView.windowVisibility + "(VISIBLE=" + View.VISIBLE + ")" +
+            " isShown=" + inputView.isShown +
+            " vis=" + inputView.visibility +
+            " w=" + inputView.width + " h=" + inputView.height +
+            " globalRect=" + inputView.getGlobalVisibleRect(r2) + r2 +
+            " parentVis=" + (inputView.parent as? View)?.visibility +
+            " parentWinVis=" + (inputView.parent as? View)?.windowVisibility
+        assertTrue(diag, controller.isInputViewActuallyRendered())
     }
 
     @Test
