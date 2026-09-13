@@ -204,6 +204,7 @@ class SuggestionController(
         suggestionJob?.cancel()
 
         val wordSnapshot = word
+        val previousWordSnapshot = previousCompletedWord
         val localeSnapshot = currentLocale
         val layoutSnapshot = keyboardLayoutProvider()
         val primaryRepository = dictionaryRepository
@@ -243,7 +244,8 @@ class SuggestionController(
                 )
             }
 
-            val next = mergeSuggestionResults(primary, extraSuggestions, settings.maxSuggestions, localeSnapshot)
+            val merged = mergeSuggestionResults(primary, extraSuggestions, settings.maxSuggestions, localeSnapshot)
+            val next = applyContextBoost(merged, previousWordSnapshot, localeSnapshot, settings.maxSuggestions)
             val pendingCandidate = addWordCandidateFor(wordSnapshot, primaryRepository)
 
             cursorHandler.post {
@@ -255,6 +257,42 @@ class SuggestionController(
                 suggestionsListener?.invoke(next)
             }
         }
+    }
+
+    /**
+     * Re-ranks current-word completions using bigram context from the previous word, so that
+     * a candidate which both fits what's being typed AND commonly follows the previous word
+     * (e.g. typing "d" for "dinh" right after "co") outranks an equally-valid but
+     * contextually-irrelevant completion. This mirrors the "unified scoring" approach real
+     * predictive keyboards use: combine what's being typed with what usually comes next.
+     *
+     * The boost is rank-based (position within the bigram-follower list), not magnitude-based,
+     * since bigram counts and the completion engine's own scores live on unrelated scales and
+     * aren't safe to add directly.
+     */
+    private fun applyContextBoost(
+        results: List<SuggestionResult>,
+        previousWord: String?,
+        locale: Locale,
+        maxSuggestions: Int
+    ): List<SuggestionResult> {
+        if (previousWord.isNullOrBlank() || results.isEmpty()) return results
+        val followers = nextWordPredictor.predict(locale, previousWord, CONTEXT_FOLLOWER_LOOKUP_LIMIT)
+        if (followers.isEmpty()) return results
+
+        val boostByWord = followers.withIndex().associate { (index, follower) ->
+            follower.candidate.lowercase(locale) to
+                CONTEXT_BOOST_MAX * (1.0 - index.toDouble() / followers.size)
+        }
+        if (boostByWord.isEmpty()) return results
+
+        return results
+            .map { result ->
+                val boost = boostByWord[result.candidate.lowercase(locale)]
+                if (boost != null) result.copy(score = result.score + boost) else result
+            }
+            .sortedByDescending { it.score }
+            .take(maxSuggestions)
     }
 
     private fun addWordCandidateFor(word: String?, repository: DictionaryRepository = dictionaryRepository): String? {
@@ -557,6 +595,17 @@ class SuggestionController(
         suggestionJob?.cancel()
         cursorRunnable?.let { cursorHandler.removeCallbacks(it) }
         nextWordPredictor.destroy()
+    }
+
+    /**
+     * Call this when a word is completed by means other than a physical boundary keypress
+     * (e.g. tapping a suggestion chip, which commits text directly via InputConnection and
+     * never goes through onBoundaryKey). Without this, the just-committed word never gets
+     * learned into the bigram store and the suggestion bar never refreshes to next-word
+     * predictions -- it just sits showing whatever was there before the tap.
+     */
+    fun notifyWordCompletedExternally(completedWord: String) {
+        handleCompletedWordBoundary(completedWord, ' ')
     }
 
     private fun handleCompletedWordBoundary(completedWord: String?, boundaryChar: Char?) {
@@ -946,5 +995,7 @@ class SuggestionController(
     companion object {
         private const val CURSOR_WORD_CONTEXT_CHARS = 128
         private const val PRIMARY_SUGGESTION_BOOST = 0.35
+        private const val CONTEXT_BOOST_MAX = 2.0
+        private const val CONTEXT_FOLLOWER_LOOKUP_LIMIT = 30
     }
 }
