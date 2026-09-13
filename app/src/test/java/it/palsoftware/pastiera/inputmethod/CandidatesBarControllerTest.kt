@@ -52,26 +52,43 @@ class CandidatesBarControllerTest {
     }
 
     @Test
-    fun attachedAndLaidOutInputViewIsReportedAsRendered() {
-    val activity = Robolectric.buildActivity(Activity::class.java).setup().visible().get()
-    val controller = CandidatesBarController(activity)
-    val inputView = controller.getInputView()
-    activity.setContentView(inputView)
-    val decorView = activity.window.decorView
-    decorView.measure(
-        View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY),
-        View.MeasureSpec.makeMeasureSpec(2400, View.MeasureSpec.EXACTLY)
-    )
-    decorView.layout(0, 0, 1080, 2400)
-    // isActuallyRendered() requires windowVisibility == VISIBLE. setContentView() swapped
-    // the view hierarchy in after the activity was already made visible, so the
-    // window-visibility dispatch that happened during .visible() never reached this new
-    // content view. Dispatch it explicitly so it propagates correctly to inputView and its
-    // descendants.
-    decorView.dispatchWindowVisibilityChanged(View.VISIBLE)
+        fun attachedAndLaidOutInputViewIsReportedAsRendered() {
+        val activity = Robolectric.buildActivity(Activity::class.java).setup().visible().get()
+        val controller = CandidatesBarController(activity)
+        val inputView = controller.getInputView()
+        activity.setContentView(inputView)
+        val decorView = activity.window.decorView
+        decorView.measure(
+            View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(2400, View.MeasureSpec.EXACTLY)
+        )
+        decorView.layout(0, 0, 1080, 2400)
+        decorView.dispatchWindowVisibilityChanged(View.VISIBLE)
 
-    assertTrue(controller.isInputViewActuallyRendered())
-}
+        println("DIAG ===== inputView =====")
+        println("DIAG isAttachedToWindow = " + inputView.isAttachedToWindow)
+        println("DIAG windowVisibility   = " + inputView.windowVisibility + "  (VISIBLE=" + View.VISIBLE + ", INVISIBLE=" + View.INVISIBLE + ", GONE=" + View.GONE + ")")
+        println("DIAG isShown            = " + inputView.isShown)
+        println("DIAG visibility         = " + inputView.visibility)
+        println("DIAG width x height     = " + inputView.width + " x " + inputView.height)
+        val r = android.graphics.Rect()
+        println("DIAG globalVisibleRect  = " + inputView.getGlobalVisibleRect(r) + "  rect=" + r)
+
+        println("DIAG ===== parent chain =====")
+        var p: View? = inputView
+        var depth = 0
+        while (p != null && depth < 10) {
+            println("DIAG [$depth] " + p.javaClass.simpleName +
+                " vis=" + p.visibility +
+                " winVis=" + p.windowVisibility +
+                " attached=" + p.isAttachedToWindow +
+                " w=" + p.width + " h=" + p.height)
+            p = p.parent as? View
+            depth++
+        }
+
+        assertTrue(controller.isInputViewActuallyRendered())
+    }
 
     @Test
     fun candidatesViewIsNotCollapsedByConfiguredSoftwareKeyboardMode() {
