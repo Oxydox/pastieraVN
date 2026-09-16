@@ -95,4 +95,61 @@ class UserNGramStoreTest {
         assertTrue(store.predict("de-DE", "ich", limit = 3).isEmpty())
         assertTrue(store.predict("de-DE", "wir", limit = 3).isEmpty())
     }
+
+    // --- Trigram (two-word context) table -------------------------------------------------
+    // Mirrors the bigram behavior above but on the separate trigram table, and confirms the
+    // two tables don't leak into each other.
+
+    @Test
+    fun learnTrigram_insertsAndIncrementsIndependentlyOfBigrams() {
+        store.learn("de-DE", "ich", "bin", nowMs = 100L) // unrelated bigram
+        store.learnTrigram("de-DE", "ich\u001Fbin", "zuhause", nowMs = 200L)
+        store.learnTrigram("de-DE", "ich\u001Fbin", "zuhause", nowMs = 300L)
+
+        val trigramPredictions = store.predictTrigram("de-DE", "ich\u001Fbin", limit = 3)
+        assertEquals(listOf("zuhause"), trigramPredictions.map { it.word })
+        assertEquals(2, trigramPredictions.first().count)
+
+        // The bigram table is untouched by trigram writes.
+        assertEquals(listOf("bin"), store.predict("de-DE", "ich", limit = 3).map { it.word })
+        assertTrue(store.predictTrigram("de-DE", "ich", limit = 3).isEmpty())
+    }
+
+    @Test
+    fun deleteTrigram_removesOnlyFromTrigramTable() {
+        store.learn("de-DE", "bin", "zuhause", nowMs = 100L)
+        store.learnTrigram("de-DE", "ich\u001Fbin", "zuhause", nowMs = 200L)
+
+        val deletedTrigram = store.deleteTrigram("de-DE", "ich\u001Fbin", "zuhause")
+
+        assertEquals(1, deletedTrigram)
+        assertTrue(store.predictTrigram("de-DE", "ich\u001Fbin", limit = 3).isEmpty())
+        // Bigram entry for the same word survives.
+        assertEquals(listOf("zuhause"), store.predict("de-DE", "bin", limit = 3).map { it.word })
+    }
+
+    @Test
+    fun deleteTrigramNextWord_removesAcrossContextsButNotBigrams() {
+        store.learn("de-DE", "bin", "zuhause", nowMs = 100L)
+        store.learnTrigram("de-DE", "ich\u001Fbin", "zuhause", nowMs = 200L)
+        store.learnTrigram("de-DE", "wir\u001Fsind", "zuhause", nowMs = 300L)
+
+        val deleted = store.deleteTrigramNextWord("de-DE", "zuhause")
+
+        assertEquals(2, deleted)
+        assertTrue(store.predictTrigram("de-DE", "ich\u001Fbin", limit = 3).isEmpty())
+        assertTrue(store.predictTrigram("de-DE", "wir\u001Fsind", limit = 3).isEmpty())
+        assertEquals(listOf("zuhause"), store.predict("de-DE", "bin", limit = 3).map { it.word })
+    }
+
+    @Test
+    fun clearAll_clearsBothBigramAndTrigramTables() {
+        store.learn("de-DE", "ich", "bin", nowMs = 100L)
+        store.learnTrigram("de-DE", "ich\u001Fbin", "zuhause", nowMs = 200L)
+
+        store.clearAll()
+
+        assertTrue(store.predict("de-DE", "ich", limit = 3).isEmpty())
+        assertTrue(store.predictTrigram("de-DE", "ich\u001Fbin", limit = 3).isEmpty())
+    }
 }
