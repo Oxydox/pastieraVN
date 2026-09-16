@@ -98,7 +98,7 @@ class SuggestionControllerNextWordTest {
     }
 
     @Test
-    fun typingLetterOverridesNextWordPredictions() {
+    fun typingLetterBlendsContextPredictionsWithDictionaryCompletions() {
         val controller = newController()
 
         typeWord(controller, "ich")
@@ -107,6 +107,27 @@ class SuggestionControllerNextWordTest {
         pressSpace(controller)
         typeWord(controller, "ich")
         pressSpace(controller)
+        typeWord(controller, "b")
+
+        // "ich" was learned to be followed by "bin", so typing just "b" should surface the
+        // context-predicted "bin" ahead of the generic dictionary completion "bar" - not
+        // discard the context the moment a letter is typed.
+        val latest = waitForSuggestionCandidates("bin", "bar")
+        assertEquals(listOf("bin", "bar"), latest.map { it.candidate })
+        assertEquals(SuggestionKind.NEXT_WORD, latest.first().kind)
+        assertEquals(SuggestionKind.CURRENT_WORD, latest[1].kind)
+    }
+
+    @Test
+    fun typingLetterThatDoesNotMatchContextFallsBackToDictionaryOnly() {
+        val controller = newController()
+
+        typeWord(controller, "ich")
+        pressSpace(controller)
+        typeWord(controller, "bin")
+        pressSpace(controller)
+        // "bin" has no learned continuation yet, so typing "b" (which doesn't match anything
+        // in-context anyway) should behave exactly as plain dictionary completion.
         typeWord(controller, "b")
 
         val latest = waitForSuggestionCandidates("bar")
