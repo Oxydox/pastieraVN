@@ -60,9 +60,8 @@ class SuggestionControllerNextWordTest {
         pressSpace(controller)
 
         val latest = snapshots.last()
-        assertEquals(listOf("bin", "bar"), latest.map { it.candidate })
+        assertEquals(listOf("bin"), latest.map { it.candidate })
         assertEquals(SuggestionKind.NEXT_WORD, latest.first().kind)
-        assertEquals(SuggestionKind.STARTER_WORD, latest[1].kind)
     }
 
     @Test
@@ -94,7 +93,9 @@ class SuggestionControllerNextWordTest {
 
         assertEquals(listOf("bin"), store.predict("de-DE", "ich", limit = 3).map { it.word })
         assertTrue(store.predict("de-DE", "bin", limit = 3).isEmpty())
-        assertEquals(SuggestionKind.STARTER_WORD, snapshots.last().first().kind)
+        // "morgen" has no learned continuation, so the bar goes blank rather than padding with
+        // unrelated common words.
+        assertTrue(snapshots.last().isEmpty())
     }
 
     @Test
@@ -196,7 +197,7 @@ class SuggestionControllerNextWordTest {
     }
 
     @Test
-    fun softBoundaryFallsBackToStarterSuggestionsWhenNoBigramExists() {
+    fun softBoundaryShowsNoSuggestionsWhenNoLearnedContinuationExists() {
         fakeRepository.addTestEntry("ich", 220)
         fakeRepository.addTestEntry("dann", 210)
         val controller = newController()
@@ -204,13 +205,15 @@ class SuggestionControllerNextWordTest {
         typeWord(controller, "neu")
         pressSpace(controller)
 
+        // "neu" has never been followed by anything the predictor knows about, so the bar goes
+        // blank rather than showing unrelated high-frequency dictionary words as if they were a
+        // guess about what comes after "neu" specifically.
         val latest = snapshots.last()
-        assertEquals(listOf("ich", "dann", "bar"), latest.map { it.candidate })
-        assertEquals(SuggestionKind.STARTER_WORD, latest.first().kind)
+        assertTrue(latest.isEmpty())
     }
 
     @Test
-    fun learnedBigramOverridesSoftBoundaryStarterFallback() {
+    fun learnedBigramShowsAloneWithoutGenericFiller() {
         fakeRepository.addTestEntry("ich", 220)
         fakeRepository.addTestEntry("dann", 210)
         val controller = newController()
@@ -223,9 +226,8 @@ class SuggestionControllerNextWordTest {
         pressSpace(controller)
 
         val latest = snapshots.last()
-        assertEquals(listOf("bin", "ich", "dann"), latest.map { it.candidate })
+        assertEquals(listOf("bin"), latest.map { it.candidate })
         assertEquals(SuggestionKind.NEXT_WORD, latest.first().kind)
-        assertEquals(SuggestionKind.STARTER_WORD, latest[1].kind)
     }
 
     @Test
