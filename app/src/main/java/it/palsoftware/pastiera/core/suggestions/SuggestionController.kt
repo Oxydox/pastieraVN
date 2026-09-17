@@ -678,6 +678,14 @@ class SuggestionController(
      * first, up to the last two completed words). Trigram context (both words) is preferred
      * over bigram (last word only) inside [NextWordPredictor.predict] itself; this just wires
      * that context through.
+     *
+     * Deliberately does NOT pad with generic dictionary-frequency filler the way
+     * [publishSentenceStartPredictionsOrStarter] does. Once the user is mid-sentence with a
+     * specific (if unrecognized) two-word context, an unrelated high-frequency word is actively
+     * misleading rather than merely unhelpful - it looks like a guess about *this* context when
+     * it's really just "a common word in general". So this only ever shows continuations the
+     * predictor genuinely learned for this context; if there are none, the suggestion bar goes
+     * blank rather than showing something that looks confident but isn't.
      */
     private fun publishNextWordPredictions(context: List<String>) {
         if (context.isEmpty()) {
@@ -694,13 +702,8 @@ class SuggestionController(
             nextWordPredictor.predict(locale, context, settings.maxSuggestions)
         }
         val predictions = mergeSuggestionResults(primary, extras, settings.maxSuggestions)
-        val suggestions = fillWithStarterSuggestions(predictions, settings)
-        if (suggestions.isNotEmpty()) {
-            latestSuggestions.set(suggestions)
-            suggestionsListener?.invoke(suggestions)
-        } else {
-            publishStarterSuggestions()
-        }
+        latestSuggestions.set(predictions)
+        suggestionsListener?.invoke(predictions)
     }
 
     private fun publishSentenceStartPredictionsOrStarter() {
